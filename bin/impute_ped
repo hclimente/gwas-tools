@@ -10,7 +10,7 @@ if (params.reference == null) {
 
     process download_1k_genomes {
 
-        publishDir '1000GP', mode 'move'
+        publishDir '1000GP', mode: 'move'
 
         output:
             file '1000GP_Phase3_*.legend.gz' into legends
