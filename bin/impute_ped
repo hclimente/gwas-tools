@@ -12,9 +12,6 @@ if (params.reference == null) {
 
         publishDir '1000GP', mode: 'move'
 
-        output:
-            file '1000GP_Phase3_*.legend.gz' into legends
-
         '''
         wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz
         tar -xzf 1000GP_Phase3.tgz && rm 1000GP_Phase3.tgz
@@ -25,11 +22,14 @@ if (params.reference == null) {
     }
 
     reference = file('1000GP')
+    legends = file("$reference/1000GP_Phase3_*.legend.gz")
 
 } else {
-    legends = file("$params.reference/1000GP_Phase3_*.legend.gz")
     reference = file(params.reference)
+    legends = file("$reference/1000GP_Phase3_*.legend.gz")
 }
+
+
 
 process ped2gen {
 
