@@ -1,0 +1,120 @@
+#!/usr/bin/env nextflow
+
+x_chr = Channel.from( "X_NONPAR", "X_PAR1", "X_PAR2" )
+chromosomes = Channel.from( 1..22 ).mix ( x_chr )
+chunk_size = 500000
+ped = file(params.ped)
+map = file(params.map)
+
+if (params.reference == null) {
+
+    process download_1k_genomes {
+
+        publishDir '1000GP', mode 'move'
+
+        output:
+            file '1000GP_Phase3_*.legend.gz' into legends
+
+        '''
+        wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz
+        tar -xzf 1000GP_Phase3.tgz && rm 1000GP_Phase3.tgz
+        wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3_chrX.tgz
+        tar -xzf 1000GP_Phase3_chrX.tgz && rm 1000GP_Phase3_chrX.tgz
+        '''
+
+    }
+
+    reference = file('1000GP')
+
+} else {
+    legends = file("$params.reference/1000GP_Phase3_*.legend.gz")
+    reference = file(params.reference)
+}
+
+process ped2gen {
+
+    input:
+        file PED from ped
+        file MAP from map
+    
+    output:
+        set 'out.gen','out.sample' into gen
+
+    script:
+    template 'io/ped2gen.sh'
+
+}
+
+process chunk {
+
+    input:
+        file LEGEND from legends
+        val CHUNK_SIZE from chunk_size
+    
+    output:
+        file 'chunks' into chr_chunks
+
+    script:
+    template 'io/chunk_legend.py'
+
+} 
+
+process join_chunks {
+
+    input:
+        file 'chunk*' from chr_chunks.collect()
+
+    output:
+        file 'chunks' into chunks_file
+
+    '''
+    cat chunk* >chunks
+    '''
+
+}
+
+chunks = chunks_file
+    .splitText()
+    .map { it.strip().tokenize( '\t' ) }
+
+process impute {
+
+    input:
+        set CHR, START, END from chunks
+        set file(GEN), file(SAMPLE) from gen
+        file REFERENCE from reference
+
+    output:
+        set 'imputed.gen','imputed.sample' into imputed_gens
+
+    script:
+    template 'impute_chunk.sh'
+
+}
+
+process merge_gens {
+
+    input:
+        set 'in*.gen', 'in*.sample' from imputed_gens.collect()
+
+    output:
+        set 'out.gen', 'out.sample' into imputed_gen
+
+    script:
+    template 'io/merge_gens.sh'
+
+
+}
+
+process gen2ped {
+
+    input:
+        set file(GEN), file(SAMPLE) from imputed_gen
+
+    output:
+        set 'out.ped','out.map' into imputed_peds
+
+    script:
+    template 'io/gen2ped.sh'
+
+}
