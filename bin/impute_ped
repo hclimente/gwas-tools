@@ -10,26 +10,32 @@ if (params.reference == null) {
 
     process download_1k_genomes {
 
-        publishDir '1000GP', mode: 'move'
+        publishDir '1000GP_Phase3', mode: 'move'
+
+        output:
+            file '1000GP_Phase3_*.legend.gz' into legends
+            file 'genetic_map_*'
+            file '1000GP_Phase3_*.hap.gz'
+            file '1000GP_Phase3.sample'
 
         '''
         wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz
-        tar -xzf 1000GP_Phase3.tgz && rm 1000GP_Phase3.tgz
+        tar -xzf 1000GP_Phase3.tgz && mv 1000GP_Phase3/* .
+        rm 1000GP_Phase3.tgz && rmdir 1000GP_Phase3
         wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3_chrX.tgz
         tar -xzf 1000GP_Phase3_chrX.tgz && rm 1000GP_Phase3_chrX.tgz
         '''
 
     }
 
-    reference = file('1000GP')
-    legends = file("$reference/1000GP_Phase3_*.legend.gz")
+    reference = file('1000GP_Phase3')
 
 } else {
+
     reference = file(params.reference)
     legends = file("$reference/1000GP_Phase3_*.legend.gz")
+
 }
-
-
 
 process ped2gen {
 
@@ -48,7 +54,7 @@ process ped2gen {
 process chunk {
 
     input:
-        file LEGEND from legends
+        each file(LEGEND) from legends
         val CHUNK_SIZE from chunk_size
     
     output:
@@ -85,7 +91,7 @@ process impute {
         file REFERENCE from reference
 
     output:
-        set 'imputed.gen','imputed.sample' into imputed_gens
+        set 'imputed.gen','out.sample' into imputed_gens
 
     script:
     template 'impute_chunk.sh'
