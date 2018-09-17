@@ -11,11 +11,14 @@ if [[ ${CHR} == *X* ]]
     fi
 fi
 
+grep "^${CHR} " ${STRAND_INFO} | cut -d' ' -f2,3 >strand_g_file
+grep "^${CHR} " ${GEN} | awk '\$3 >= ${START}'| awk '\$3 <= ${END}' >region.gen
+
 # impute only on the screened SNPs
 ## only genotyped snps are included in the panel
 ## use 503 samples for the reference with european origin
 impute2 \
--g ${GEN} \
+-g region.gen \
 -m ${REFERENCE}/genetic_map_chr${CHR}_combined_b37.txt \
 -int ${START} ${END} \
 -h ${REFERENCE}/1000GP_Phase3_chr${CHR}.hap.gz \
@@ -25,4 +28,4 @@ impute2 \
 \$chrXflags \
 -k_hap 503 \
 -os 2 -o imputed.gen \
-#-strand_g \${STRAND_INFO} \
+-strand_g strand_g_file

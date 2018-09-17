@@ -5,7 +5,7 @@
 import gzip
 
 chromosome = '${LEGEND}'.split('.')[0].replace('1000GP_Phase3_chr', '')
-first_pos = 0
+first_pos = float('inf')
 last_pos = float('-inf')
 
 with gzip.open('${LEGEND}', mode = 'rt') as legend:

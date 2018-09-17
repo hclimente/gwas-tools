@@ -5,6 +5,8 @@ chromosomes = Channel.from( 1..22 ).mix ( x_chr )
 chunk_size = 500000
 ped = file(params.ped)
 map = file(params.map)
+strand_info = file(params.strand_info)
+params.out = '.'
 
 if (params.reference == null) {
 
@@ -89,6 +91,7 @@ process impute {
         set CHR, START, END from chunks
         set file(GEN), file(SAMPLE) from gen
         file REFERENCE from reference
+        file STRAND_INFO from strand_info
 
     output:
         set 'imputed.gen','out.sample' into imputed_gens
@@ -109,10 +112,11 @@ process merge_gens {
     script:
     template 'io/merge_gens.sh'
 
-
 }
 
 process gen2ped {
+
+    publishDir "$params.out", overwrite: true, mode: "move"
 
     input:
         set file(GEN), file(SAMPLE) from imputed_gen
