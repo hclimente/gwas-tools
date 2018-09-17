@@ -8,6 +8,27 @@ map = file(params.map)
 strand_info = file(params.strand_info)
 params.out = '.'
 
+populations = [ 'ACB': 96 , 'ASW': 61 , 'BEB': 86 , 'CDX': 93 , 'CEU': 99 , 
+                'CHB': 103 , 'CHS': 105 , 'CLM': 94 , 'ESN': 99 , 'FIN': 99 , 
+                'GBR': 91 , 'GIH': 103 , 'GWD': 113 , 'IBS': 107 , 'ITU': 102 , 
+                'JPT': 104 , 'KHV': 99 , 'LWK': 99 , 'MSL': 85 , 'MXL': 64 , 
+                'PEL': 85 , 'PJL': 96 , 'PUR': 104 , 'STU': 102 , 'TSI': 107 , 
+                'YRI': 108 ]
+superpopulations = [ 'AMR': ['CLM','MXL','PEL','PUR'],
+                     'SAS': ['BEB','GIH','ITU','PJL','STU'],
+                     'EAS': ['CDX','CHB','CHD','CHS','JPT','KHV'],
+                     'EUR': ['CEU','IBS','FIN','GBR','TSI'],
+                     'AFR': ['ACB','ASW','ESN','GWD','LWK','MSL','YRI'] ]
+
+if (params.population in populations) {
+    num_samples_ref = populations[params.population]
+} else {
+    num_samples_ref = 0
+    for (p in superpopulations[params.population]) {
+        num_samples_ref += populations[p]
+    }
+}
+
 if (params.reference == null) {
 
     process download_1k_genomes {
@@ -92,6 +113,7 @@ process impute {
         set file(GEN), file(SAMPLE) from gen
         file REFERENCE from reference
         file STRAND_INFO from strand_info
+        val SAMPLES_REFERENCE from num_samples_ref
 
     output:
         set 'imputed.gen','out.sample' into imputed_gens

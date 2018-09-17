@@ -1,4 +1,4 @@
-# SAMPLE, GEN, GENTIC_MAP, HAPS, LEGEND, STRAND_INFO
+# SAMPLE, GEN, GENTIC_MAP, HAPS, LEGEND, STRAND_INFO, SAMPLES_REFERENCE
 # imputed.gen, imputed.gen_warnings
 
 chrXflags=''
@@ -12,11 +12,13 @@ if [[ ${CHR} == *X* ]]
 fi
 
 grep "^${CHR} " ${STRAND_INFO} | cut -d' ' -f2,3 >strand_g_file
+
+# create a gen with only the chromosome (the chromosomic region for efficiency)
+# else, impute2 doesn't detect any snp
 grep "^${CHR} " ${GEN} | awk '\$3 >= ${START}'| awk '\$3 <= ${END}' >region.gen
 
 # impute only on the screened SNPs
 ## only genotyped snps are included in the panel
-## use 503 samples for the reference with european origin
 impute2 \
 -g region.gen \
 -m ${REFERENCE}/genetic_map_chr${CHR}_combined_b37.txt \
@@ -26,6 +28,6 @@ impute2 \
 -Ne 20000 \
 -verbose \
 \$chrXflags \
--k_hap 503 \
+-k_hap ${SAMPLES_REFERENCE} \
 -os 2 -o imputed.gen \
 -strand_g strand_g_file
