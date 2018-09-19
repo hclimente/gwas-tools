@@ -77,28 +77,14 @@ process ped2gen {
 process chunk {
 
     input:
-        each file(LEGEND) from legends
+        each file(MAP) from map
         val CHUNK_SIZE from chunk_size
     
     output:
-        file 'chunks' into chr_chunks
-
-    script:
-    template 'io/chunk_legend.py'
-
-} 
-
-process join_chunks {
-
-    input:
-        file 'chunk*' from chr_chunks.collect()
-
-    output:
         file 'chunks' into chunks_file
 
-    '''
-    cat chunk* >chunks
-    '''
+    script:
+    template 'io/chunk_map.py'
 
 }
 
