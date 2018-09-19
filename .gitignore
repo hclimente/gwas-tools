@@ -157,7 +157,7 @@ pip-selfcheck.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
+*.code-workspace
 
 # End of https://www.gitignore.io/api/macos,python,visualstudiocode
 
