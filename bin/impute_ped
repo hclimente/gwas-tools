@@ -74,10 +74,10 @@ process ped2gen {
 
 }
 
-process chunk {
+process chunk_genome {
 
     input:
-        each file(MAP) from map
+        file MAP from map
         val CHUNK_SIZE from chunk_size
     
     output:
