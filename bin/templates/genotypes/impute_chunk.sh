@@ -16,9 +16,14 @@ grep "^${CHR} " ${STRAND_INFO} | cut -d' ' -f2,3 >strand_g_file
 # create a gen with only the chromosome (the chromosomic region for efficiency)
 # else, impute2 doesn't detect any snp
 grep "^${CHR} " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} + 250000)' >region.gen
-zcat ${REFERENCE}/1000GP_Phase3_chr${CHR}.legend.gz | awk '\$2 >= (${START} - 250000)'| awk '\$2 <= (${END} + 250000)' >region.legend
+cut -f3 -d' ' region.gen | sort | uniq >pos_gen
 
-if [ -s region.gen ] || [ -s region.gen ]
+zcat ${REFERENCE}/1000GP_Phase3_chr${CHR}.legend.gz | awk '\$2 >= (${START} - 250000)'| awk '\$2 <= (${END} + 250000)' >region.legend
+cut -d' ' -f2 region.legend | sort | uniq >pos_leg
+
+sort pos_* | uniq -d > repeated
+
+if [ -s repeated ]
 then
     # impute only on the screened SNPs
     ## only genotyped snps are included in the panel
