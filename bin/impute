@@ -84,7 +84,7 @@ process chunk_genome {
         file 'chunks' into chunks_file
 
     script:
-    template 'io/chunk_map.py'
+    template 'genotypes/chunk_map.py'
 
 }
 
@@ -105,7 +105,7 @@ process impute {
         set 'imputed.gen','out.sample' into imputed_gens
 
     script:
-    template 'impute_chunk.sh'
+    template 'genotypes/impute_chunk.sh'
 
 }
 

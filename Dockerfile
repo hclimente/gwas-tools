@@ -1,7 +1,7 @@
 FROM r-base
 
 RUN apt-get update \
-    && apt-get install -y wget unzip tar python sed bedtools libcurl4-gnutls-dev libxml2 \
+    && apt-get install -y wget unzip tar python sed bedtools libcurl4-gnutls-dev libxml2-dev libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 RUN mkdir /gwas-tools
 ENV PATH="/gwas-tools:${PATH}"
@@ -19,3 +19,4 @@ RUN wget https://github.com/bedops/bedops/releases/download/v2.4.35/bedops_linux
 RUN wget https://vegas2.qimrberghofer.edu.au/vegas2v2
 RUN wget https://www.cog-genomics.org/static/bin/plink180913/plink_linux_x86_64.zip \
     && unzip plink_linux_x86_64.zip
+WORKDIR /home/docker
