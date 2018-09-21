@@ -3,28 +3,24 @@
 params.out = '.'
 
 map = file(params.map)
-params.v = 28
+params.gencode = 28
 params.genome = 'GRCh38'
-
-tag1 = (params.genome == 'GRCh37') ? '/GRCh37_mapping' : ''
-tag2 = (params.genome == 'GRCh37') ? 'lift37' : ''
 
 process download_hgnc {
 
     output:
         file 'non_alt_loci_set.txt' into hgnc
 
-    '''
-    wget ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/non_alt_loci_set.txt
-    '''
+    script:
+    template 'dbs/hgnc.sh'
+    
 }
 
 process download_annotation {
 
     input:
-        val GENCODE_VERSION from params.v
-        val TAG1 from tag1
-        val TAG2 from tag2
+        val GENCODE_VERSION from params.gencode
+        val GENOME_VERSION from params.genome
 
     output:
         file 'gff3' into gff
