@@ -1,0 +1,45 @@
+#!/usr/bin/env nextflow
+
+params.out = '.'
+
+ped = file(params.ped)
+map = file(params.map)
+
+process pca {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file PED from ped
+        file MAP from map
+
+    output:
+        file 'pca.pdf'
+
+    """
+    #!/usr/bin/env Rscript
+
+    library(snpStats)
+    library(tidyverse)
+
+    gwas <- read.pedfile('${PED}', snps = '${MAP}')
+
+    if ( length(unique(gwas\$fam\$affected)) == 2 ) {
+        gwas\$fam\$affected <- as.character(gwas\$fam\$affected)
+    }
+
+    xxmat <- xxt(gwas\$genotypes)
+    evv <- eigen(xxmat, symmetric=TRUE)
+
+    pcs <- evv\$vectors[,1:5]
+    pca <- as_tibble(pcs) %>% 
+        mutate(y = gwas\$fam\$affected) %>%
+        ggplot(aes(x = V1, y = V2, color = y)) + 
+            geom_point() +
+            labs(x = 'Component 1', y = 'Component 2', color = 'Phenotype') +
+            theme_minimal() +
+            theme(legend.position = 'bottom')
+    ggsave('pca.pdf', pca)
+    """
+
+}
