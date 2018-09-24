@@ -1,2 +1,2 @@
-run_vegas --ped data/in.ped --map data/in.map "$@"
+run_vegas --ped data/example.ped --map data/example.map "$@"
 rm vegas.out
