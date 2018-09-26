@@ -1,2 +1,2 @@
 run_vegas --ped data/example.ped --map data/example.map "$@"
-rm scored_genes.out
+rm -f scored_genes.out
