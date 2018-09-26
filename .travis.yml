@@ -1,0 +1,10 @@
+sudo: required
+
+services:
+  - docker
+
+install:
+  - curl -fsSL get.nextflow.io | bash
+
+script: 
+  - bash test.sh
