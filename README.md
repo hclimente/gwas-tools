@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/hclimente/gwas-tools.svg?branch=master)](https://travis-ci.org/hclimente/gwas-tools)
+
 # gwas-tools
 
 Short pipelines to deal with GWAS data.
@@ -8,7 +10,7 @@ Short pipelines to deal with GWAS data.
 impute --ped data/example.ped --map dataexample.map --strand_info data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools
 ```
 
-# Run VEGAS 2ls
+# Run VEGAS 2
 
 ```
 run_vegas --ped data/example.ped --map dataexample.map -with-docker hclimente/gwas-tools
