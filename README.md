@@ -10,7 +10,7 @@ The easiest way to install gwas-tools is cloning the repository, and adding the 
 
 ```
 git clone git@github.com:hclimente/gwas-tools.git
-export PATH="`pwd`/gwas-tools/bin:${PATH}"
+export PATH=$PATH:$PWD/gwas-tools/bin
 ```
 
 ## Dependencies:
