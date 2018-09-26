@@ -7,7 +7,7 @@ install:
   - curl -fsSL get.nextflow.io | bash
 
 before_script:
-  - export PATH=$TRAVIS_BUILD_DIR/gwas-tools/bin:$PATH
+  - export PATH=$TRAVIS_BUILD_DIR/bin:$PATH
 
 script: 
   - bash test.sh
