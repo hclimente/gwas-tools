@@ -5,6 +5,7 @@ services:
 
 install:
   - curl -fsSL get.nextflow.io | bash
+  - export PATH="`pwd`/gwas-tools/bin:${PATH}"
 
 script: 
   - bash test.sh
