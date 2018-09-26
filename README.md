@@ -2,7 +2,21 @@
 
 # gwas-tools
 
-Short pipelines to deal with GWAS data.
+Containerized pipelines to deal with GWAS data.
+
+# Installation
+
+The easiest way to install gwas-tools is cloning the repository, and adding the bin folder to your path:
+
+```
+git clone git@github.com:hclimente/gwas-tools.git
+export PATH="`pwd`/gwas-tools/bin:${PATH}"
+```
+
+## Dependencies:
+
+- [Nextflow](https://www.nextflow.io/)
+- [Docker](https://www.docker.com/)
 
 # Impute
 
@@ -22,6 +36,4 @@ run_vegas --ped data/example.ped --map dataexample.map -with-docker hclimente/gw
 snp2gene --map data/example.map --genome GRCh38 -with-docker hclimente/gwas-tools
 ```
 
-Dependencies:
-- [Nextflow](https://www.nextflow.io/)
-- [Docker](https://www.docker.com/)
+
