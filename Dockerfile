@@ -16,7 +16,7 @@ RUN wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/liftOver && chmod
 RUN wget https://github.com/bedops/bedops/releases/download/v2.4.35/bedops_linux_x86_64-v2.4.35.tar.bz2 \
     && tar jxvf bedops_linux_x86_64-v2.4.35.tar.bz2 \
     && cp bin/* .
-RUN wget https://vegas2.qimrberghofer.edu.au/vegas2v2
+RUN wget https://vegas2.qimrberghofer.edu.au/vegas2v2 && chmod a+x vegas2v2
 RUN wget https://www.cog-genomics.org/static/bin/plink180913/plink_linux_x86_64.zip \
     && unzip plink_linux_x86_64.zip
 WORKDIR /home/docker
