@@ -5,6 +5,7 @@ services:
 
 install:
   - curl -fsSL get.nextflow.io | bash
+  - mv nextflow $TRAVIS_BUILD_DIR/bin
 
 before_script:
   - export PATH=$TRAVIS_BUILD_DIR/bin:$PATH
