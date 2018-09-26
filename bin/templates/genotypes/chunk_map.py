@@ -17,7 +17,18 @@ with open('${MAP}', mode = 'r') as gwas_map:
 with open('chunks', 'w') as chunks:
     for chromosome in chrs:
         pos = chrs[chromosome]
-        for start in range(min(pos), max(pos), ${CHUNK_SIZE}):
-            end = min(start + ${CHUNK_SIZE}, max(pos))
+        start_chr = min(pos)
+        end_chr = max(pos)
+
+        for start in range(start_chr, end_chr, ${CHUNK_SIZE}):
+            end = min(start + ${CHUNK_SIZE}, end_chr)
+
+            # if the last chunk is small, add it to the penultimate chunk
+            if (end_chr - end) < (${CHUNK_SIZE}/5):
+                end = end_chr
+
             if [ x for x in pos if x >= start and x <= end ]:
                 chunks.write('{}\\t{}\\t{}\\n'.format(chromosome, start, end))
+
+                if end == end_chr:
+                    break

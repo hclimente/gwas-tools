@@ -41,7 +41,7 @@ process create_ensembl_glist {
 
     """
     awk '{if(\$3=="gene" || \$3=="pseugene"){print \$0}}' $gff >genes.gff
-    gff2bed < genes.gff | cut -f1-4 | sed 's/\\..\\+\$//' | sed 's/^chr//' >tmp
+    gff2bed < genes.gff | cut -f1-4 | sed 's/\\.[^\\t]\\+\$//' | sed 's/^chr//' >tmp
     sed 's/^XY/25/' tmp | sed 's/^X/23/' | sed 's/^Y/24/' >glist_ensembl
     """
 
@@ -82,24 +82,8 @@ process compute_chisq {
         file 'snp_association' into snp_association
 
     """
-    #!/usr/bin/env Rscript
-    library(tidyverse)
-	library(snpStats)
-
-    gwas <- read.pedfile('${PED}', snps = '${MAP}')
-    subject.info <- data.frame(cc = gwas\$fam\$affected, 
-                               stratum = rep("EUR", nrow(gwas\$fam)))
-
-    tests <- single.snp.tests(gwas\$fam\$affected,
-                              data = subject.info,
-                              snp.data = gwas\$genotypes)
-
-    gwas\$map %>%
-        rename(chr = V1, pos = V4, snp = snp.names) %>%
-        mutate(p = p.value(tests, df=1)) %>%
-        select(snp, p) %>%
-        filter(!is.na(p)) %>%
-        write_tsv('snp_association', col_names = FALSE)
+    plink --ped ${PED} --map ${MAP} --assoc
+    sed 's/ \\+/\\t/g' plink.assoc | cut -f3,10 | tail -n +2 >snp_association
     """
 
 }
@@ -136,7 +120,7 @@ process run_vegas {
         file 'scored_genes.out'
 
     """
-    vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom ${BED.baseName} -glist ${GLIST} -out scored_genes
+    vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes -upper 50000 -lower 50000
     """
 
 }
