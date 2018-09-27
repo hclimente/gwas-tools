@@ -121,6 +121,8 @@ process run_vegas {
 
     """
     vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes -upper 50000 -lower 50000
+    sed 's/"//g' scored_genes.out | sed 's/ /\\t/g' >tmp
+    mv tmp scored_genes.out
     """
 
 }
