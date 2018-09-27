@@ -2,7 +2,7 @@
 
 x_chr = Channel.from( "X_NONPAR", "X_PAR1", "X_PAR2" )
 chromosomes = Channel.from( 1..22 ).mix ( x_chr )
-chunk_size = 500000
+chunk_size = 5000000
 ped = file(params.ped)
 map = file(params.map)
 strand_info = file(params.strand_info)
@@ -68,6 +68,7 @@ process ped2gen {
     
     output:
         set 'out.gen','out.sample' into gen
+	file 'out.sample' into sample
 
     script:
     template 'io/ped2gen.sh'
@@ -94,6 +95,9 @@ chunks = chunks_file
 
 process impute {
 
+    tag { "${CHR}:${START}:${END}" }
+    validExitStatus 0,77
+
     input:
         set CHR, START, END from chunks
         set file(GEN), file(SAMPLE) from gen
@@ -102,7 +106,8 @@ process impute {
         val SAMPLES_REFERENCE from num_samples_ref
 
     output:
-        set 'imputed.gen','out.sample' into imputed_gens
+        file 'imputed.gen' into imputed_gens
+        file 'out.sample' into imputed_samples
 
     script:
     template 'genotypes/impute_chunk.sh'
@@ -112,10 +117,11 @@ process impute {
 process merge_gens {
 
     input:
-        set 'in*.gen', 'in*.sample' from imputed_gens.collect()
+        file 'imputed*.gen' from imputed_gens.collect()
+	file 'imputed*.sample' from imputed_samples.collect()
 
     output:
-        set 'out.gen', 'out.sample' into imputed_gen
+        set 'merged.gen', 'merged.sample' into imputed_gen
 
     script:
     template 'io/merge_gens.sh'
