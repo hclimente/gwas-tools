@@ -20,14 +20,14 @@ grep "^${CHR} " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} +
 # impute only on the screened SNPs
 # only genotyped snps are included in the panel
 impute2 \
-    -g region.gen \
-    -m ${REFERENCE}/genetic_map_chr${CHR}_combined_b37.txt \
-    -int ${START} ${END} \
-    -h ${REFERENCE}/1000GP_Phase3_chr${CHR}.hap.gz \
-    -l ${REFERENCE}/1000GP_Phase3_chr${CHR}.legend.gz \
-    -Ne 20000 \
-    -verbose \
-    \$chrXflags \
-    -k_hap ${SAMPLES_REFERENCE} \
-    -os 2 -o imputed.gen \
-    -strand_g strand_g_file || ( mv region.gen imputed.gen && exit 77 )
+-g region.gen \
+-m ${REFERENCE}/genetic_map_chr${CHR}_combined_b37.txt \
+-int ${START} ${END} \
+-h ${REFERENCE}/1000GP_Phase3_chr${CHR}.hap.gz \
+-l ${REFERENCE}/1000GP_Phase3_chr${CHR}.legend.gz \
+-Ne 20000 \
+-verbose \
+\$chrXflags \
+-k_hap ${SAMPLES_REFERENCE} \
+-os 3 -o imputed.gen \
+-strand_g strand_g_file || ( mv region.gen imputed.gen && exit 77 )
