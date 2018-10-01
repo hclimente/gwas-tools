@@ -1,0 +1,117 @@
+#!/usr/bin/env nextflow
+
+params.out = '.'
+
+// gwas
+ped = file(params.ped)
+map = file(params.map)
+
+// annotation
+params.gencode = 28
+params.genome = 'GRCh38'
+
+// SConES parameters
+params.network = 'gs'
+params.snp_score = 'chi2'
+params.model_score = 'consistency'
+params.encoding = 'additive'
+
+if ((params.network == 'gm' | params.network == 'gi') & params.snp2gene != null) {
+
+    SNP2GENE = file(params.snp2gene)
+    TAB2 = file('no-tab')
+
+    if (params.network == 'gi') {
+
+        process download_biogrid {
+
+            output:
+                file 'mitab' into TAB2
+            
+            script:
+            template 'dbs/biogrid.sh'
+
+        }
+
+    }
+
+} else {
+    SNP2GENE = file('no-snp2gene')
+    TAB2 = file('no-tab')
+}
+
+process ped2r {
+
+    input:
+        file PED from ped
+        file MAP from map
+
+    output:
+        file 'gwas.RData' into rgwas_network, rgwas_scones
+
+    script:
+    template 'io/ped2r.R'
+
+}
+
+process create_network {
+
+    input:
+        file RGWAS from rgwas_network
+        val NET from params.network
+        file TAB2
+        file SNP2GENE
+
+    output:
+        file 'net.RData' into RNET
+
+    """
+    #!/usr/bin/env Rscript
+    library(martini)
+    library(tidyverse)
+    library(igraph)
+
+    load("${RGWAS}")
+    netType <- "${NET}"
+
+    if (netType == "gs") {
+        net <- get_GS_network(gwas)
+    } else if (netType %in% c('gm', 'gi')) {
+        snp2gene <- read_tsv("${SNP2GENE}")  %>%
+            rename(snp = SNP, gene = GENE)
+
+        if (netType == "gm") {
+            net <- get_GM_network(gwas, snpMapping = snp2gene)
+        } else if (netType == "gi") {
+            tab2 <- read_tsv("${TAB2}") %>%
+                rename(gene1 = `Official Symbol Interactor A`, gene2 = `Official Symbol Interactor B`) %>%
+                select(gene1, gene2)
+            net <- get_GI_network(gwas, snpMapping = snp2gene, ppi = tab2)
+        }
+    } else {
+        stop("network type not recognized.")
+    }
+
+    save(net, file = "net.RData")
+    """
+    
+}
+
+process run_scones {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file RGWAS from rgwas_scones
+        file RNET
+        val SNP_SCORE from params.snp_score
+        val MODEL_SCORE from params.model_score
+        val ENCODING from params.encoding
+
+    output:
+        file 'cones.tsv'
+
+    script:
+    template 'discovery/run_scones.R'
+
+}
