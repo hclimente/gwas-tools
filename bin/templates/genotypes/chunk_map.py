@@ -7,7 +7,7 @@ chrs = {}
 
 with open('${MAP}', mode = 'r') as gwas_map:
     for line in gwas_map.readlines():
-        line = line.strip().split('\t')
+        line = line.strip().split('\\t')
         chromosome = int(line[0])
         pos = int(line[3])
 
