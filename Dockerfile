@@ -19,4 +19,6 @@ RUN wget https://github.com/bedops/bedops/releases/download/v2.4.35/bedops_linux
 RUN wget https://vegas2.qimrberghofer.edu.au/vegas2v2 && chmod a+x vegas2v2
 RUN wget https://www.cog-genomics.org/static/bin/plink180913/plink_linux_x86_64.zip \
     && unzip plink_linux_x86_64.zip
+RUN wget --no-check-certificate https://bioinfo.uth.edu/dmGWAS/dmGWAS_3.0.tar.gz \
+    && R -e 'install.packages("dmGWAS_3.0.tar.gz", repos = NULL, type="source")'
 WORKDIR /home/docker

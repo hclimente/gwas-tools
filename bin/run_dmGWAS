@@ -1,0 +1,58 @@
+#!/usr/bin/env nextflow
+
+params.out = '.'
+
+// annotation
+VEGAS_OUT = file(params.vegas)
+
+process download_biogrid {
+
+    output:
+        file 'tab2' into TAB2
+    
+    script:
+    template 'dbs/biogrid.sh'
+
+}
+
+process run_dmGWAS {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file VEGAS_OUT
+        file TAB2
+
+    output:
+        file 'subnetworks.tsv'
+        file 'scored_subnetworks.tsv'
+
+    """
+    #!/usr/bin/env Rscript
+
+    library(dmGWAS)
+    library(tidyverse)
+
+    vegas <- read_tsv('${VEGAS_OUT}') %>% 
+        select(Gene, Pvalue) %>%
+        mutate(Pvalue = ifelse(Pvalue == 1, 0.99999, Pvalue)) %>%
+        as.data.frame
+    ppi <- read_tsv('${TAB2}') %>%
+        rename(interactorA = `Official Symbol Interactor A`, 
+               interactorB = `Official Symbol Interactor B`) %>%
+        select(interactorA, interactorB)
+
+    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL,d=1, r = 0.1)
+
+    modules\$zi.ordered %>%
+        rename(seed = gene) %>%
+        write_tsv('scored_subnetworks.tsv')
+    
+    genesets <- lapply(modules\$genesets.clear, paste, collapse = ',')
+    data_frame(seed = names(genesets), 
+               genes = unlist(genesets)) %>%
+        separate_rows(genes, sep = ',') %>%
+        write_tsv('subnetworks.tsv')
+    """
+
+}

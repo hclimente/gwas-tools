@@ -26,7 +26,7 @@ if ((params.network == 'gm' | params.network == 'gi') & params.snp2gene != null)
         process download_biogrid {
 
             output:
-                file 'mitab' into TAB2
+                file 'tab2' into TAB2
             
             script:
             template 'dbs/biogrid.sh'
