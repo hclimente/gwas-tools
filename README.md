@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/hclimente/gwas-tools.svg?branch=master)](https://travis-ci.org/hclimente/gwas-tools)
-
 # gwas-tools
 
 Containerized pipelines to deal with GWAS data.
