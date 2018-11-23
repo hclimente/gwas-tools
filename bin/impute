@@ -1,12 +1,11 @@
 #!/usr/bin/env nextflow
 
-x_chr = Channel.from( "X_NONPAR", "X_PAR1", "X_PAR2" )
-chromosomes = Channel.from( 1..22 ).mix ( x_chr )
 chunk_size = 5000000
 ped = file(params.ped)
 map = file(params.map)
 strand_info = file(params.strand_info)
 params.out = '.'
+params.genome = 'GRCh38'
 
 populations = [ 'ACB': 96 , 'ASW': 61 , 'BEB': 86 , 'CDX': 93 , 'CEU': 99 , 
                 'CHB': 103 , 'CHS': 105 , 'CLM': 94 , 'ESN': 99 , 'FIN': 99 , 
@@ -80,6 +79,7 @@ process chunk_genome {
     input:
         file MAP from map
         val CHUNK_SIZE from chunk_size
+        val GENOME from params.genome
     
     output:
         file 'chunks' into chunks_file
