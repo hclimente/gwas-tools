@@ -11,7 +11,8 @@ if [[ ${CHR} == *X* ]]
     fi
 fi
 
-grep "^${CHR} " ${STRAND_INFO} | cut -d' ' -f2,3 >strand_g_file
+chr=`echo ${CHR} | sed 's/_.\\+//'`
+grep "^\$chr\\s" ${STRAND_INFO} | cut -d' ' -f2,3 >strand_g_file
 
 # create a gen with only the chromosome (the chromosomic region for efficiency)
 # else, impute2 doesn't detect any snp
@@ -29,5 +30,5 @@ impute2 \
 -verbose \
 \$chrXflags \
 -k_hap ${SAMPLES_REFERENCE} \
--os 3 -o imputed.gen \
+-os 2 -o imputed.gen \
 -strand_g strand_g_file || ( mv region.gen imputed.gen && exit 77 )

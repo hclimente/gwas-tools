@@ -37,7 +37,8 @@ process run_dmGWAS {
         select(Gene, Pvalue) %>%
         mutate(Pvalue = ifelse(Pvalue == 1, 0.99999, Pvalue)) %>%
         as.data.frame
-    ppi <- read_tsv('${TAB2}') %>%
+    ppi <- read_tsv('${TAB2}',
+		    col_types = 'cccccccccccccccccccccccc') %>%
         rename(interactorA = `Official Symbol Interactor A`, 
                interactorB = `Official Symbol Interactor B`) %>%
         select(interactorA, interactorB)
