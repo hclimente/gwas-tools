@@ -40,7 +40,7 @@ process create_ensembl_glist {
         file 'glist_ensembl' into glist_ensembl
 
     """
-    awk '{if(\$3=="gene" || \$3=="pseugene"){print \$0}}' $gff >genes.gff
+    awk '\$3 == "gene"' $gff >genes.gff
     gff2bed < genes.gff | cut -f1-4 | sed 's/\\.[^\\t]\\+\$//' | sed 's/^chr//' >tmp
     sed 's/^XY/25/' tmp | sed 's/^X/23/' | sed 's/^Y/24/' >glist_ensembl
     """

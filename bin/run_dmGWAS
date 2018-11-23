@@ -43,7 +43,7 @@ process run_dmGWAS {
                interactorB = `Official Symbol Interactor B`) %>%
         select(interactorA, interactorB)
 
-    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL,d=1, r = 0.1)
+    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, d = 2, r = 0.1)
 
     modules\$zi.ordered %>%
         rename(seed = gene) %>%
