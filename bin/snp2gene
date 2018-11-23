@@ -39,7 +39,7 @@ process extract_genes {
 		file 'genes.gff' into genes_gff
 
 	"""
-	awk '{if(\$3=="gene" || \$3=="pseugene"){print \$0}}' $gff >genes.gff
+	awk '\$3 == "gene"' $gff >genes.gff
 	"""
 
 }
