@@ -1,7 +1,7 @@
 FROM r-base
 
 RUN apt-get update \
-    && apt-get install -y wget unzip tar python sed bedtools libcurl4-gnutls-dev libxml2-dev libssl-dev \
+    && apt-get install -y wget unzip tar python sed bedtools libcurl4-gnutls-dev libxml2-dev libssl-dev gawk \
     && rm -rf /var/lib/apt/lists/*
 RUN mkdir /gwas-tools
 ENV PATH="/gwas-tools:${PATH}"
@@ -17,7 +17,7 @@ RUN wget https://github.com/bedops/bedops/releases/download/v2.4.35/bedops_linux
     && tar jxvf bedops_linux_x86_64-v2.4.35.tar.bz2 \
     && cp bin/* .
 RUN wget https://vegas2.qimrberghofer.edu.au/vegas2v2 && chmod a+x vegas2v2
-RUN wget https://www.cog-genomics.org/static/bin/plink180913/plink_linux_x86_64.zip \
+RUN wget https://www.cog-genomics.org/static/bin/plink181012/plink_linux_x86_64.zip \
     && unzip plink_linux_x86_64.zip
 RUN wget --no-check-certificate https://bioinfo.uth.edu/dmGWAS/dmGWAS_3.0.tar.gz \
     && R -e 'install.packages("dmGWAS_3.0.tar.gz", repos = NULL, type="source")'
