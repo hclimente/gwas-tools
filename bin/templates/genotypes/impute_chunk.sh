@@ -9,14 +9,16 @@ if [[ ${CHR} == *X* ]]
     then
         chrXflags="\$chrXflags -Xpar"
     fi
+    grep "^23 " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} + 250000)' >region.gen
+    grep "^X " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} + 250000)' >>region.gen
+else
+    # create a gen with only the chromosome (the chromosomic region for efficiency)
+    # else, impute2 doesn't detect any snp
+    grep "^${CHR} " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} + 250000)' >region.gen
 fi
 
 chr=`echo ${CHR} | sed 's/_.\\+//'`
 grep "^\$chr\\s" ${STRAND_INFO} | cut -d' ' -f2,3 >strand_g_file
-
-# create a gen with only the chromosome (the chromosomic region for efficiency)
-# else, impute2 doesn't detect any snp
-grep "^${CHR} " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} + 250000)' >region.gen
 
 # impute only on the screened SNPs
 # only genotyped snps are included in the panel
