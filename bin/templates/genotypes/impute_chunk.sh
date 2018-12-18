@@ -9,8 +9,8 @@ if [[ ${CHR} == *X* ]]
     then
         chrXflags="\$chrXflags -Xpar"
     fi
-    grep "^23 " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} + 250000)' >region.gen
-    grep "^X " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} + 250000)' >>region.gen
+    grep "^23 " ${GEN} | sed 's/^23/X/' | awk '\$3 >= ${START}'| awk '\$3 <= ${END}' >region.gen
+    grep "^X " ${GEN} | awk '\$3 >= ${START}'| awk '\$3 <= ${END}' >>region.gen
 else
     # create a gen with only the chromosome (the chromosomic region for efficiency)
     # else, impute2 doesn't detect any snp
