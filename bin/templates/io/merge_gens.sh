@@ -1,1 +1,2 @@
-gtool -M --g imputed*.gen --s imputed*.sample --og merged.gen --os merged.sample --threshold 0.95
+sort -k1,1V -k3,3n imputed*gen >merged.gen
+cp imputed1.sample merged.sample
