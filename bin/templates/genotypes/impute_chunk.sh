@@ -20,10 +20,18 @@ fi
 chr=`echo ${CHR} | sed 's/_.\\+//'`
 grep "^\$chr\\s" ${STRAND_INFO} | cut -d' ' -f2,3 >strand_g_file
 
+# prephase haplotypes
+impute2 -prephase_g \
+-m ${REFERENCE}/genetic_map_chr${CHR}_combined_b37.txt \
+-g region.gen \
+-int ${START} ${END} \
+-Ne 20000 
+-o prephased.gen
+
 # impute only on the screened SNPs
 # only genotyped snps are included in the panel
-impute2 \
--g region.gen \
+impute2 -use_prephased_g \
+-known_haps_g prephased.gen_haps \
 -m ${REFERENCE}/genetic_map_chr${CHR}_combined_b37.txt \
 -int ${START} ${END} \
 -h ${REFERENCE}/1000GP_Phase3_chr${CHR}.hap.gz \
