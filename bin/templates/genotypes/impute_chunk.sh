@@ -25,8 +25,7 @@ impute2 -prephase_g \
 -m ${REFERENCE}/genetic_map_chr${CHR}_combined_b37.txt \
 -g region.gen \
 -int ${START} ${END} \
--Ne 20000 
--o prephased.gen
+-Ne 20000 -o prephased.gen
 
 # impute only on the screened SNPs
 # only genotyped snps are included in the panel
