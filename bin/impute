@@ -130,8 +130,6 @@ process merge_gens {
 
 process gen2ped {
 
-    publishDir "$params.out", overwrite: true, mode: "move"
-
     input:
         set file(GEN), file(SAMPLE) from imputed_gen
 
@@ -142,3 +140,21 @@ process gen2ped {
     template 'io/gen2ped.sh'
 
 }
+
+process ped2bed {
+
+    publishDir "$params.out", overwrite: true, mode: "move"
+
+    input:
+        set file(PED), file(MAP) from imputed_peds
+
+    output:
+        file 'out.bed'
+        file 'out.bim'
+        file 'out.fam'
+
+    script:
+    template 'io/ped2bed.sh'
+
+}
+
