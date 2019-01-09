@@ -9,12 +9,12 @@ if [[ ${CHR} == *X* ]]
     then
         chrXflags="\$chrXflags -Xpar"
     fi
-    grep "^23 " ${GEN} | sed 's/^23/X/' | awk '\$3 >= ${START}'| awk '\$3 <= ${END}' >region.gen
-    grep "^X " ${GEN} | awk '\$3 >= ${START}'| awk '\$3 <= ${END}' >>region.gen
+    grep "^23 " ${GEN} | sed 's/^23/X/' >region.gen
+    grep "^X " ${GEN} | cat >>region.gen
 else
-    # create a gen with only the chromosome (the chromosomic region for efficiency)
+    # create a gen with only the chromosome
     # else, impute2 doesn't detect any snp
-    grep "^${CHR} " ${GEN} | awk '\$3 >= (${START} - 250000)'| awk '\$3 <= (${END} + 250000)' >region.gen
+    grep "^${CHR} " ${GEN} >region.gen
 fi
 
 chr=`echo ${CHR} | sed 's/_.\\+//'`
@@ -40,4 +40,4 @@ impute2 -use_prephased_g \
 \$chrXflags \
 -k_hap ${SAMPLES_REFERENCE} \
 -os 2 -o imputed.gen \
--strand_g strand_g_file || ( mv region.gen imputed.gen && exit 77 )
+-strand_g strand_g_file || ( awk '\$3 >= ${START}' region.gen | awk '\$3 <= ${END}' >imputed.gen && exit 77 )
