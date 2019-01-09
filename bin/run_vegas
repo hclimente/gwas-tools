@@ -4,8 +4,9 @@ params.out = '.'
 
 params.gencode = 28
 params.genome = 'GRCh38'
-ped = file(params.ped)
-map = file(params.map)
+bed = file(params.bed)
+bim = file(params.bim)
+fam = file(params.fam)
 
 process download_hgnc {
 
@@ -84,23 +85,6 @@ process compute_chisq {
     """
     plink --ped ${PED} --map ${MAP} --assoc
     sed 's/ \\+/\\t/g' plink.assoc | cut -f3,10 | tail -n +2 >snp_association
-    """
-
-}
-
-process make_bed {
-
-    input:
-        file PED from ped
-        file MAP from map
-
-    output:
-        file 'out.bed' into bed
-        file 'out.bim' into bim
-        file 'out.fam' into fam
-
-    """
-    plink --file ${PED.baseName} --make-bed --out out
     """
 
 }
