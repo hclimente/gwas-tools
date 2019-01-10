@@ -4,11 +4,13 @@ params.out = '.'
 
 params.gencode = 28
 params.genome = 'GRCh38'
+params.vegas_params = '-upper 50000 -lower 50000'
+params.covar = ''
+
 bed = file(params.bed)
 bim = file(params.bim)
 fam = file(params.fam)
 
-params.vegas_opts = '-upper 50000 -lower 50000'
 
 process download_hgnc {
 
@@ -75,20 +77,46 @@ process convert_glist_to_hgnc {
 
 }
 
-process compute_chisq {
+if (params.covar == '') {
 
-    input:
-        file BED from bed
-        file BIM from bim
-        file FAM from fam
+    process compute_chisq {
 
-    output:
-        file 'snp_association' into snp_association
+        input:
+            file BED from bed
+            file BIM from bim
+            file FAM from fam
 
-    """
-    plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc
-    sed 's/ \\+/\\t/g' plink.assoc | cut -f3,10 | tail -n +2 >snp_association
-    """
+        output:
+            file 'snp_association' into snp_association
+
+        """
+        plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc 
+        awk 'NR > 1 { print \$2,\$9 }' OFS='\\t' plink.assoc  >snp_association
+        """
+
+    }
+
+} else {
+
+    covar = file(params.covar)
+
+    process regress_phenotypes_with_covars {
+
+        input:
+            file BED from bed
+            file BIM from bim
+            file FAM from fam
+            file COVAR from covar
+
+        output:
+            file 'snp_association' into snp_association
+
+        """
+        plink --bed ${BED} --bim ${BIM} --fam ${FAM} --logistic --covar ${COVAR}
+        awk 'NR > 1 && \$5 != "ADD" { print \$2,\$9 }' OFS='\\t' plink.assoc.logistic >snp_association
+        """
+
+    }
 
 }
 
@@ -102,12 +130,13 @@ process run_vegas {
         file fam
         file SNPASSOCIATION from snp_association
         file GLIST from glist_hgnc
+        val VEGAS_PARAMS from params.vegas_params
 
     output:
         file 'scored_genes.out'
 
     """
-    vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes ${params.vegas_opts}
+    vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes ${VEGAS_PARAMS}
     sed 's/"//g' scored_genes.out | sed 's/ /\\t/g' >tmp
     mv tmp scored_genes.out
     """
