@@ -2,7 +2,7 @@
 
 params.out = '.'
 
-map = file(params.map)
+bim = file(params.bim)
 params.gencode = 28
 params.genome = 'GRCh38'
 
@@ -58,16 +58,16 @@ process gff2bed {
 
 }
 
-process map2bed {
+process bim2bed {
 
 	input:
-		file map
+		file BIM from bim
 
 	output:
 		file 'snps.bed' into snps_bed
 
 	"""
-	awk '{print "chr" \$1 "\\t" \$4 "\\t" \$4 "\\t" \$2 "\\t.\\t." }' $map >tmp
+	awk '{print "chr" \$1 "\\t" \$4 "\\t" \$4 "\\t" \$2 "\\t.\\t." }' ${BIM} >tmp
 	sed 's/chr23/chrX/' tmp >snps.bed
 	"""
 
