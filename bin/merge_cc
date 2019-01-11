@@ -2,26 +2,31 @@
 
 params.out = '.'
 
-ped1 = file(params.ped1)
-map1 = file(params.map1)
-ped2 = file(params.ped2)
-map2 = file(params.map2)
+bed1 = file(params.file1)
+bim1 = file("${bed1.baseName}.bim")
+fam1 = file("${bed1.baseName}.fam")
+bed2 = file(params.file2)
+bim2 = file("${bed2.baseName}.bim")
+fam2 = file("${bed2.baseName}.fam")
 
-input_files = Channel.from ( [ped1,map1], [ped2,map2] )
+input_files = Channel.from ( [bed1, bim1, fam1], [bed2, bim2, fam2] )
+
+params.plink_params = '--extract intersection'
 
 process set_phenotypes {
 
     input:
-        set file(PED), file(MAP) from input_files
+        set file(BED), file(BIM), file(FAM) from input_files
         val Y from 1..2
 
     output:
-        file MAP into maps
-        file 'new_phenotype.ped' into peds
+        file BED into beds
+        file BIM into bims
+        file 'new_phenotype.fam' into fams
 
     script:
     """
-    awk '{\$6 = "$Y"; print}' $PED >new_phenotype.ped
+    awk '{\$6 = "$Y"; print}' $FAM >new_phenotype.fam
     """
 
 }
@@ -31,15 +36,19 @@ process merge_datasets {
     publishDir "$params.out", overwrite: true, mode: "move"
 
     input:
-        file 'map*' from maps. collect()
-        file 'ped*' from peds. collect()
+        file 'bed*' from beds. collect()
+        file 'bim*' from bims. collect()
+        file 'fam*' from fams. collect()
+        val PLINK_PARAMS from params.plink_params
 
     output:
-        file 'merged.ped' into ped
-        file 'merged.map' into map
+        file 'merged.bed' into bed
+        file 'merged.bim' into bim
+        file 'merged.fam' into fam
 
     """
-    plink --ped ped1 --map map1 --merge ped2 map2 --allow-extra-chr --allow-no-sex --recode --out merged
+    cut -f2 bim1 bim2 | sort | uniq -c | awk '\$1 == 2 {print \$2}' >intersection
+    plink --bed bed1 --bim bim1 --fam fam1 --bmerge bed2 bim2 fam2 ${PLINK_PARAMS} --make-bed --out merged
     """
 
 }
