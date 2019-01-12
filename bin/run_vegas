@@ -91,7 +91,7 @@ if (params.covar == '') {
 
         """
         plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc 
-        awk 'NR > 1 { print \$2,\$9 }' OFS='\\t' plink.assoc  >snp_association
+        awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc  >snp_association
         """
 
     }
@@ -113,7 +113,7 @@ if (params.covar == '') {
 
         """
         plink --bed ${BED} --bim ${BIM} --fam ${FAM} --logistic --covar ${COVAR}
-        awk 'NR > 1 && \$5 != "ADD" { print \$2,\$9 }' OFS='\\t' plink.assoc.logistic >snp_association
+        awk 'NR > 1 && \$5 == "ADD" && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc.logistic >snp_association
         """
 
     }
@@ -133,12 +133,12 @@ process run_vegas {
         val VEGAS_PARAMS from params.vegas_params
 
     output:
-        file 'scored_genes.out'
+        file 'scored_genes.vegas.txt'
 
     """
     vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes ${VEGAS_PARAMS}
     sed 's/"//g' scored_genes.out | sed 's/ /\\t/g' >tmp
-    mv tmp scored_genes.out
+    mv tmp scored_genes.vegas.txt
     """
 
 }
