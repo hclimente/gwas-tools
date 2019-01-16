@@ -11,7 +11,9 @@ bed = file(params.bed)
 bim = file(params.bim)
 fam = file(params.fam)
 
-
+//////////////////////////////////////////////
+///RUN VEGAS         ///
+//////////////////////////////////////////////
 process download_hgnc {
 
     output:
@@ -77,6 +79,9 @@ process convert_glist_to_hgnc {
 
 }
 
+//////////////////////////////////////////////
+///          SNP ASSOCIATION TEST          ///
+//////////////////////////////////////////////
 if (params.covar == '') {
 
     process compute_chisq {
@@ -120,14 +125,38 @@ if (params.covar == '') {
 
 }
 
-process run_vegas {
-
-    publishDir "$params.out", overwrite: true, mode: "copy"
+//////////////////////////////////////////////
+///         EXTRACT CONTROLS FOR LD        ///
+//////////////////////////////////////////////
+process extract_controls {
 
     input:
         file BED from bed
         file bim
         file fam
+
+    output:
+        file 'plink.bed' into bed_controls
+        file 'plink.bim' into bim_controls
+        file 'plink.fam' into fam_controls
+
+    """
+    plink --bfile ${BED.baseName} --filter-controls --make-bed
+    """
+
+}
+
+//////////////////////////////////////////////
+///                RUN VEGAS               ///
+//////////////////////////////////////////////
+process run_vegas {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file BED from bed_controls
+        file bim_controls
+        file fam_controls
         file SNPASSOCIATION from snp_association
         file GLIST from glist_hgnc
         val VEGAS_PARAMS from params.vegas_params
