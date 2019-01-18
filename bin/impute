@@ -1,8 +1,11 @@
 #!/usr/bin/env nextflow
 
 chunk_size = 5000000
-ped = file(params.ped)
-map = file(params.map)
+
+bed = file(params.bfile)
+bim = file("${bed.baseName}.bim")
+fam = file("${bed.baseName}.fam")
+
 strand_info = file(params.strand_info)
 params.out = '.'
 params.genome = 'GRCh38'
@@ -59,6 +62,23 @@ if (params.reference == null) {
 
 }
 
+process bed2ped {
+
+    input:
+        file BED from bed
+        file bim
+        file fam
+
+    output:
+        file 'plink.ped' into ped
+        file 'plink.map' into map
+
+    """
+    plink --bfile ${BED.baseName} --recode
+    """
+
+}
+
 process ped2gen {
 
     input:
@@ -77,7 +97,7 @@ process ped2gen {
 process chunk_genome {
 
     input:
-        file MAP from map
+        file MAP from bim
         val CHUNK_SIZE from chunk_size
         val GENOME from params.genome
     
