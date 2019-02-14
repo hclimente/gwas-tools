@@ -2,7 +2,7 @@
 
 chunk_size = 5000000
 
-bed = file(params.bfile)
+bed = file("${params.bfile}.bed")
 bim = file("${bed.baseName}.bim")
 fam = file("${bed.baseName}.fam")
 
