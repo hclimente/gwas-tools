@@ -84,7 +84,6 @@ process ped2gen {
     input:
         file PED from ped
         file MAP from map
-    
     output:
         set 'out.gen','out.sample' into gen
 	file 'out.sample' into sample
@@ -100,7 +99,6 @@ process chunk_genome {
         file MAP from bim
         val CHUNK_SIZE from chunk_size
         val GENOME from params.genome
-    
     output:
         file 'chunks' into chunks_file
 
