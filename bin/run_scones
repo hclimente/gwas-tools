@@ -9,33 +9,14 @@ fam = file("${bed.baseName}.fam")
 
 // SConES parameters
 params.network = 'gs'
-params.snp_score = 'chi2'
-params.model_score = 'consistency'
+params.score = 'chi2'
+params.criterion = 'aicc'
 params.encoding = 'additive'
 
-if ((params.network == 'gm' | params.network == 'gi') & params.snp2gene != null) {
+// additional files
 
-    SNP2GENE = file(params.snp2gene)
-    TAB2 = file('no-tab')
-
-    if (params.network == 'gi') {
-
-        process download_biogrid {
-
-            output:
-                file 'tab2' into TAB2
-            
-            script:
-            template 'dbs/biogrid.sh'
-
-        }
-
-    }
-
-} else {
-    SNP2GENE = file('no-snp2gene')
-    TAB2 = file('no-tab')
-}
+snp2gene = (params.network == 'gm' | params.network == 'gi') ? file(params.snp2gene) : file('NO_SNP2GENE')
+tab2 = (params.network == 'gi') ? file(params.tab2) : file('NO_TAB2')
 
 process bed2r {
 
@@ -57,8 +38,8 @@ process create_network {
     input:
         file RGWAS from rgwas_network
         val NET from params.network
-        file TAB2
-        file SNP2GENE
+        file TAB2 from tab2
+        file SNP2GENE from snp2gene
 
     output:
         file 'net.RData' into RNET
@@ -92,7 +73,6 @@ process create_network {
 
     save(net, file = "net.RData")
     """
-    
 }
 
 process run_scones {
@@ -102,9 +82,8 @@ process run_scones {
     input:
         file RGWAS from rgwas_scones
         file RNET
-        val SNP_SCORE from params.snp_score
-        val MODEL_SCORE from params.model_score
-        val ENCODING from params.encoding
+        val SCORE from params.score
+        val CRITERION from params.criterion
 
     output:
         file 'cones.tsv'
