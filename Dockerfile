@@ -6,7 +6,7 @@ RUN apt-get update \
 RUN mkdir /gwas-tools
 ENV PATH="/gwas-tools:${PATH}"
 WORKDIR /gwas-tools
-RUN R -e "install.packages(c('mvtnorm', 'corpcor', 'tidyverse', 'magrittr'), repos = 'http://cran.us.r-project.org')"
+RUN R -e "install.packages(c('mvtnorm', 'corpcor', 'tidyverse', 'magrittr', 'LEANR'), repos = 'http://cran.us.r-project.org')"
 RUN R -e "source('https://bioconductor.org/biocLite.R'); biocLite('martini')"
 RUN wget http://www.well.ox.ac.uk/~cfreeman/software/gwas/gtool_v0.7.5_x86_64.tgz \
     && tar -zxvf gtool_v0.7.5_x86_64.tgz
