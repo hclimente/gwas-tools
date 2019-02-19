@@ -4,16 +4,7 @@ params.out = '.'
 
 // annotation
 VEGAS_OUT = file(params.vegas)
-
-process download_biogrid {
-
-    output:
-        file 'tab2' into TAB2
-    
-    script:
-    template 'dbs/biogrid.sh'
-
-}
+TAB2 =  file(params.tab2)
 
 process run_dmGWAS {
 
@@ -43,7 +34,7 @@ process run_dmGWAS {
                interactorB = `Official Symbol Interactor B`) %>%
         select(interactorA, interactorB)
 
-    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, d = 2, r = 0.1)
+    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, r = 0.1)
 
     modules\$zi.ordered %>%
         rename(seed = gene) %>%
