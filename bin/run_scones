@@ -10,7 +10,7 @@ fam = file("${bed.baseName}.fam")
 // SConES parameters
 params.network = 'gs'
 params.score = 'chi2'
-params.criterion = 'aicc'
+params.criterion = 'consistency'
 params.encoding = 'additive'
 
 // additional files
@@ -56,8 +56,7 @@ process create_network {
     if (netType == "gs") {
         net <- get_GS_network(gwas)
     } else if (netType %in% c('gm', 'gi')) {
-        snp2gene <- read_tsv("${SNP2GENE}")  %>%
-            rename(snp = SNP, gene = GENE)
+        snp2gene <- read_tsv("${SNP2GENE}")
 
         if (netType == "gm") {
             net <- get_GM_network(gwas, snpMapping = snp2gene)
