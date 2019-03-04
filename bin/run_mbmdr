@@ -1,0 +1,130 @@
+#!/usr/bin/env nextflow
+
+params.out = '.'
+
+// gwas
+bed = file("${params.bfile}.bed")
+bim = file("${bed.baseName}.bim")
+fam = file("${bed.baseName}.fam")
+
+// parameters
+params.N = 10
+params.mode = 'binary'
+
+process bed2ped {
+
+    input:
+        file BED from bed
+        file BIM from bim
+        file FAM from fam
+
+    output:
+        file 'out.ped' into ped
+        file 'out.map' into map
+
+    script:
+    template 'io/bed2ped.sh'
+
+}
+
+process ped2mbmdr {
+
+	input:
+		file PED from ped
+		file MAP from map
+        val MODE from params.mode
+
+	output:
+		file "mbmdrFile" into mbmdrFile
+		file "labels" into mbmdrLabels
+
+	"""
+    echo -e 'chr\tname\tcM\tpos' >fixed.map
+	cat ${MAP} >>fixed.map
+
+	mbmdr.out --plink2mbmdr --${MODE} -ped ${PED} -map fixed.map -o mbmdrFile -tr labels
+	"""
+
+}
+
+mbmdrFile.into { mbmdrFile_1; mbmdrFile_2; mbmdrFile_3; mbmdrFile_4 }
+
+process compute_top_vectors {
+
+	errorStrategy 'retry'
+	maxRetries 3
+
+	input:
+		each I from 1..params.N
+        val N from params.N
+		file INPUT from mbmdrFile_1
+        val MODE from params.mode
+
+	output:
+		file "top*.txt" into topFiles
+
+	"""
+	mbmdr.out --${MODE} --gammastep1 -i ${I} -N ${N} ${INPUT}
+	"""
+
+}
+
+process merge_top_vectors {
+
+	input:
+		file "top*.txt" from topFiles.collect()
+		file INPUT from mbmdrFile_2
+        val MODE from params.mode
+        val N from params.N
+
+	output:
+		file "topFile.txt" into topFile
+
+	"""
+	mbmdr.out --${MODE} --gammastep2 -N ${N} ${INPUT}
+	"""
+
+}
+
+topFile.into { topFile_permutations; topFile_4 }
+
+process compute_permutations {
+
+	errorStrategy 'retry'
+	maxRetries 3
+
+	input:
+		each I from 1..params.N
+        val N from params.N
+		file TOP from topFile_permutations
+		file INPUT from mbmdrFile_3
+        val MODE from params.mode
+
+	output:
+		file "perm_*" into permutFiles
+
+	"""
+	mbmdr.out --${MODE} --gammastep3 -q ${N} -o perm_${I}.txt -t ${TOP} ${INPUT}
+	"""
+
+}
+
+process merge_permutations {
+
+	publishDir "$params.out", overwrite: true, mode: "copy"
+
+	input:
+		file "perm_*.txt" from permutFiles.collect()
+        val N from params.N
+		file TOP from topFile_4
+		file INPUT from mbmdrFile_4
+        val MODE from params.mode
+
+	output:
+		file "*_output.txt"
+
+	"""
+	mbmdr.out --${MODE} --gammastep4 -c perm_ -q ${N} -t ${TOP} ${INPUT}
+	"""
+
+}
