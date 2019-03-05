@@ -17,8 +17,10 @@ RUN wget https://github.com/bedops/bedops/releases/download/v2.4.35/bedops_linux
     && tar jxvf bedops_linux_x86_64-v2.4.35.tar.bz2 \
     && cp bin/* .
 RUN wget https://vegas2.qimrberghofer.edu.au/vegas2v2 && chmod a+x vegas2v2
-RUN wget https://www.cog-genomics.org/static/bin/plink181012/plink_linux_x86_64.zip \
+RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20190304.zip \
     && unzip plink_linux_x86_64.zip
 RUN wget --no-check-certificate https://bioinfo.uth.edu/dmGWAS/dmGWAS_3.0.tar.gz \
     && R -e 'install.packages("dmGWAS_3.0.tar.gz", repos = NULL, type="source")'
+RUN wget http://bio3.giga.ulg.ac.be/software/mbmdr-4.4.1/mbmdr-4.4.1-linux-64bits.out \
+    && mv mbmdr-4.4.1-linux-64bits.out mbmdr && chmod a+x mbmdr
 WORKDIR /home/docker
