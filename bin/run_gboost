@@ -8,7 +8,7 @@ bim = file("${bed.baseName}.bim")
 fam = file("${bed.baseName}.fam")
 
 n_snps = Channel
-        .fromPath("${BIM}")
+        .fromPath("${bim}")
         .splitText()
         .count()
 
@@ -29,39 +29,39 @@ process bed2r {
 
 process r2boost {
 
-	input:
-		file rdata
+    input:
+        file rdata
 
-	output:
-		file "genotypes.boost" into boostIn
+    output:
+        file "genotypes.boost" into boostIn
 
-	"""
-	#!/usr/bin/env Rscript
+    """
+    #!/usr/bin/env Rscript
 
-	library(snpStats)
-	library(tidyverse)
-	load("$rdata")
+    library(snpStats)
+    library(tidyverse)
+    load("$rdata")
 
-	X <- as(gwas\$genotypes, "numeric")
-	Y <- gwas\$fam\$affected - 1
+    X <- as(gwas\$genotypes, "numeric")
+    Y <- gwas\$fam\$affected - 1
 
-	cbind(Y,X) %>% as.data.frame %>% write_delim("genotypes.boost", col_names = F)
-	"""
+    cbind(Y,X) %>% as.data.frame %>% write_delim("genotypes.boost", col_names = F)
+    """
 
 }
 
 process runBOOST {
 
-	input:
-		file boostIn
+    input:
+        file boostIn
 
-	output:
-		file "tempInteractionRecords.txt" into gboost_out
+    output:
+        file "tempInteractionRecords.txt" into gboost_out
 
-	"""
-	echo $boostIn >listFile
-	GBOOST -i listFile -wm GPU
-	"""
+    """
+    echo $boostIn >listFile
+    GBOOST -i listFile -wm GPU
+    """
 
 }
 
@@ -69,34 +69,34 @@ process compute_pvalues {
 
     publishDir "$params.out", overwrite: true, mode: "copy"
 
-	input:
-		file BIM from bim
-		file GBOOST_OUT from  gboost_out
-		val N_SNPS from n_snps
+    input:
+        file BIM from bim
+        file GBOOST_OUT from  gboost_out
+        val N_SNPS from n_snps
 
-	output:
-		file 'scored_interactions.boost.txt'
+    output:
+        file 'scored_interactions.boost.txt'
 
-	"""
-	#!/usr/bin/env Rscript
+    """
+    #!/usr/bin/env Rscript
 
-	library(tidyverse)
-	library(magrittr)
+    library(tidyverse)
+    library(magrittr)
 
-	map <- read_tsv("${BIM}", col_names = F) %>%
-		set_colnames(c("chr", "snp", "pos", "gpos"))
+    map <- read_tsv("${BIM}", col_names = F) %>%
+        set_colnames(c("chr", "snp", "pos", "gpos"))
 
-	read_tsv("${GBOOST_OUT}", col_names = F) %>%
-		set_colnames(c("index","SNP1","SNP2","singlelocusAssoc1","singlelocusAssoc2","InteractionBOOST","InteractionPLINK")) %>%
-		mutate(SNP1 = map\$snp[SNP1],
-		       SNP2 = map\$snp[SNP2],
-		       p_singlelocusAssoc1 = pchisq(singlelocusAssoc1, 2, lower.tail = F),
-		       p_singlelocusAssoc2 = pchisq(singlelocusAssoc2, 2, lower.tail = F),
-		       p_InteractionBOOST = pchisq(InteractionBOOST, 4, lower.tail = F),
-		       padj_singlelocusAssoc1 = p.adjust(p_singlelocusAssoc1, n = ${N_SNPs}),
+    read_tsv("${GBOOST_OUT}", col_names = F) %>%
+        set_colnames(c("index","SNP1","SNP2","singlelocusAssoc1","singlelocusAssoc2","InteractionBOOST","InteractionPLINK")) %>%
+        mutate(SNP1 = map\$snp[SNP1],
+               SNP2 = map\$snp[SNP2],
+               p_singlelocusAssoc1 = pchisq(singlelocusAssoc1, 2, lower.tail = F),
+               p_singlelocusAssoc2 = pchisq(singlelocusAssoc2, 2, lower.tail = F),
+               p_InteractionBOOST = pchisq(InteractionBOOST, 4, lower.tail = F),
+               padj_singlelocusAssoc1 = p.adjust(p_singlelocusAssoc1, n = ${N_SNPs}),
                        padj_singlelocusAssoc2 = p.adjust(p_singlelocusAssoc2, n = ${N_SNPs}),
                        padj_InteractionBOOST = p.adjust(p_InteractionBOOST, n = ${N_SNPs}*(${N_SNPs} - 1)/2)) %>%
-		write_tsv("scored_interactions.boost.txt")
-	"""
+        write_tsv("scored_interactions.boost.txt")
+    """
 
 }

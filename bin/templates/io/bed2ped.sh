@@ -1,1 +1,1 @@
-plink -bfile ${PED.baseName} -recode -out out
+plink -bfile ${BED.baseName} -recode -out out
