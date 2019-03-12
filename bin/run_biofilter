@@ -1,0 +1,59 @@
+#!/usr/bin/env nextflow
+
+params.out = '.'
+
+snp2gene = file(params.snp2gene)
+loki = file(params.loki)
+
+process get_gene_models {
+
+    input:
+        file LOKI from loki
+        file SNP2GENE from snp2gene
+
+    output:
+        file 'biofilter.gene.models' into snp_models
+
+    """
+    tail -n +2 ${SNP2GENE} | cut -f2 | sort | uniq >genes
+
+    cat << EOF >parameters.txt
+    KNOWLEDGE           ${LOKI}
+    GENE_FILE           genes
+    MODEL               gene
+    EOF
+
+    biofilter.py parameters.txt
+    """
+
+}
+
+process make_snp_models {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file SNP_MODELS from snp_models
+        file SNP2GENE from snp2gene
+
+    output:
+        file 'snp_models.tsv'
+
+    """
+    #!/usr/bin/env Rscript
+
+    library(tidyverse)
+
+    snp2gene <- read_tsv("${SNP2GENE}")
+
+    read_tsv("${SNP_MODELS}") %>%
+        inner_join(snp2gene, by = c('#gene1' = 'gene')) %>%
+        inner_join(snp2gene, by = c('gene2' = 'gene'), suffix = c("_1", "_2")) %>%
+        filter(snp_1 != snp_2) %>%
+        rename(gene_1 = `#gene1`, gene_2 = gene2) %>%
+        select(snp_1, gene_1, snp_2, gene_2, `score(src-grp)`) %>%
+        unique %>%
+        write_tsv('snp_models.tsv')
+    """
+
+}
