@@ -1,8 +1,8 @@
 # gwas-tools
 
-Containerized pipelines to deal with GWAS data.
+This repository contains pipelines for common use-cases when dealing with GWAS datasets, from data preprocessing to biomarker discovery. 
 
-# Installation
+## Installation
 
 The easiest way to install gwas-tools is cloning the repository, and adding the bin folder to your path:
 
@@ -11,27 +11,44 @@ git clone git@github.com:hclimente/gwas-tools.git
 export PATH=$PATH:$PWD/gwas-tools/bin
 ```
 
-## Dependencies:
+The pipelines are written in [Nextflow](https://www.nextflow.io/), and makes use of several tools. These tools need to be installed independently on a per-pipeline basis, or can be found in the Docker image [hclimente/gwas-tools](https://cloud.docker.com/swarm/hclimente/repository/docker/hclimente/gwas-tools/general). Nextflow can use Docker containers with the option '-with-docker' or -with0singularity-
 
-- [Nextflow](https://www.nextflow.io/)
-- [Docker](https://www.docker.com/)
+# Functions
 
-# Impute
+- Data preprocessing
+    - [Impute a dataset](#impute-a-dataset)
+    - [PCA on a dataset]()
+    - [Run VEGAS2 on a dataset](#run-vegas2)
+    - [Map SNPs to genes](#map-snps-to-gencode-genes)
+    - [Map eQTLs to their regulated genes]()
+    - [Filter SNPs with Biofilter]()
+    - [Lift coordinates]()
+
+- Network-based discovery
+    - [SConES]()
+    - [dmGWAS]()
+    - [LEAN]()
+    - [Sigmod]()
+
+- Epistasis detection
+    - [MB-MDR]()
+
+# Data preprocessing
+
+## Impute a dataset
 
 ```
-impute --ped data/example.ped --map dataexample.map --strand_info data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools
+impute --bfile test/data/example --strand_info test/data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools
 ```
 
-# Run VEGAS 2
+## Run VEGAS2
 
 ```
-run_vegas --ped data/example.ped --map dataexample.map -with-docker hclimente/gwas-tools
+run_vegas --bfile test/data/example -with-docker hclimente/gwas-tools
 ```
 
-# Map SNPs to genes from GENCODE
+## Map SNPs to GENCODE genes
 
 ```
-snp2gene --map data/example.map --genome GRCh38 -with-docker hclimente/gwas-tools
+snp2gene --bim test/data/example.map --genome GRCh38 -with-docker hclimente/gwas-tools
 ```
-
-
