@@ -11,7 +11,7 @@ git clone git@github.com:hclimente/gwas-tools.git
 export PATH=$PATH:$PWD/gwas-tools/bin
 ```
 
-The pipelines are written in [Nextflow](https://www.nextflow.io/), and makes use of several tools. These tools need to be installed independently on a per-pipeline basis, or can be found in the Docker image [hclimente/gwas-tools](https://cloud.docker.com/swarm/hclimente/repository/docker/hclimente/gwas-tools/general). Nextflow can use Docker containers with the option '-with-docker' or -with0singularity-
+The pipelines are written in [Nextflow](https://www.nextflow.io/), and makes use of several tools. These tools need to be installed independently on a per-pipeline basis, or used from a Docker image using the option '*-with-docker hclimente/gwas-tools*' or '*-with-singularity hclimente/gwas-tools*'.
 
 # Functions
 
