@@ -24,7 +24,9 @@ RUN wget http://bio3.giga.ulg.ac.be/software/mbmdr-4.4.1/mbmdr-4.4.1-linux-64bit
 RUN wget --no-check-certificate https://ritchielab.org/files/RL_software/biofilter-2.4.1.tar.gz \
     && tar -xvzf biofilter-2.4.1.tar.gz \
     && pip install apsw \
-    && echo 'alias biofilter="python2 /gwas-tools/biofilter-2.4.1/biofilter.py"' >> ~/.bashrc
+    && cd biofilter-2.4.1 && python2 setup.py install && cd ..
+RUN wget https://sites.fas.harvard.edu/\~junliu/BEAM/BEAM_linux.tar \
+    && tar -xvf BEAM_linux.tar
 RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20190304.zip \
     && unzip plink_linux_x86_64_20190304.zip 
 WORKDIR /home/docker
