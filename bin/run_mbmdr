@@ -4,8 +4,8 @@ params.out = '.'
 
 // gwas
 bed = file("${params.bfile}.bed")
-bim = file("${bed.baseName}.bim")
-fam = file("${bed.baseName}.fam")
+bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
+fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
 // parameters
 params.N = 10

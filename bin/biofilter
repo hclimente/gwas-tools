@@ -52,7 +52,7 @@ process make_snp_models {
         filter(snp_1 != snp_2) %>%
         rename(gene_1 = `#gene1`, gene_2 = gene2) %>%
         select(snp_1, gene_1, snp_2, gene_2, `score(src-grp)`) %>%
-        unique %>%
+        separate(`score(src-grp)`, into = c('num_sources', 'num_instances'), sep = '-') %>%
         write_tsv('snp_models.tsv')
     """
 

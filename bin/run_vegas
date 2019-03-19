@@ -8,8 +8,8 @@ params.vegas_params = '-upper 50000 -lower 50000'
 params.covar = ''
 
 bed = file("${params.bfile}.bed")
-bim = file("${bed.baseName}.bim")
-fam = file("${bed.baseName}.fam")
+bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
+fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
 //////////////////////////////////////////////
 ///RUN VEGAS         ///

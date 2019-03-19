@@ -1,10 +1,10 @@
 # Input variables:
 #    - GENCODE_VERSION
-#    - GENOME_VERSION
+#    - GRCH_VERSION
 # Output file:
 #    - gff3
 
-if [ '$GENOME_VERSION' == 'GRCh37' ];
+if [ '${GRCH_VERSION}' == '37' ];
 then
     tag1='/GRCh37_mapping'
     tag2='lift37'

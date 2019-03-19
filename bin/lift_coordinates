@@ -1,34 +1,35 @@
 #!/usr/bin/env nextflow
 
-map = file(params.map)
-ped = file(params.ped)
+bim = file(params.bim)
+old_hg = params.old_hg
+new_hg = params.new_hg
 
 params.out = '.'
 
-process map2bed {
+process bim2bed {
 
     input:
-        file MAP from map
+        file BIM from bim
 
     output:
         file 'out.bed' into bed
 
     script:
-    template 'io/map2bed.py'
+    template 'io/bim2bed.py'
 
 }
 
 process download_chain {
 
     input:
-        val OLD from params.old
-        val NEW from params.new
+        val OLD from old_hg
+        val NEW from new_hg
     
     output:
-        file "${OLD}To${NEW}.over.chain.gz" into chain
+        file "hg${OLD}ToHg${NEW}.over.chain.gz" into chain
 
     """
-    wget http://hgdownload.cse.ucsc.edu/goldenPath/${OLD}/liftOver/${OLD}To${NEW.capitalize()}.over.chain.gz
+    wget http://hgdownload.cse.ucsc.edu/goldenPath/hg${OLD}/liftOver/hg${OLD}ToHg${NEW}.over.chain.gz
     """
 
 }
@@ -62,22 +63,4 @@ process bed2map {
     script:
     template 'io/bed2map.py'
 
-}
-
-process remove_unlifted {
-
-    publishDir "$params.out", overwrite: true, mode: "move"
-
-    input:
-        file PED from ped
-        file MAP from map
-        file EXCLUDE from unlifted
-
-    output:
-        file 'out.ped'
-
-    """
-    cut -f4 ${EXCLUDE}| grep -v ^# >excluded
-    plink --ped ${PED} --map ${MAP} --exclude excluded --recode --out out
-    """
 }

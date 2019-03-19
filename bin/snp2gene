@@ -3,8 +3,9 @@
 params.out = '.'
 
 bim = file(params.bim)
-params.gencode = 28
-params.genome = 'GRCh38'
+params.gencode_version = 28
+params.grch_version = 'GRCh38'
+params.buffer = 50000
 
 process download_hgnc {
 
@@ -19,8 +20,8 @@ process download_hgnc {
 process download_annotation {
 
     input:
-        val GENCODE_VERSION from params.gencode
-        val GENOME_VERSION from params.genome
+        val GENCODE_VERSION from params.gencode_version
+        val GRCH_VERSION from params.grch_version
 
     output:
         file 'gff3' into gff
@@ -48,12 +49,14 @@ process gff2bed {
 
 	input:
 		file genes_gff
+		val BUFFER from params.buffer
 
 	output:
 		file 'genes.bed' into genes_bed
 
 	"""
-	gff2bed < $genes_gff >genes.bed
+	gff2bed < $genes_gff >tmp
+	awk '{\$2 = \$2 - ${BUFFER}; \$2 = (\$2<0?0:\$2); \$3 = \$3 + ${BUFFER}; \$3 = (\$3<0?0:\$3); print}' OFS='\\t' tmp >genes.bed
 	"""
 
 }

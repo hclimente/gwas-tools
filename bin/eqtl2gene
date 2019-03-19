@@ -1,0 +1,89 @@
+#!/usr/bin/env nextflow
+
+params.out = '.'
+
+bim = file(params.bim)
+params.grch_version = '38'
+params.tissue = 'all'
+
+process download_eQTLs {
+
+	input:
+		val TISSUE from params.tissue
+
+	output:
+		file 'gene_snp.txt' into gene_snp
+		file 'eqtl.map' into eqtl_premap
+
+	"""
+	# get snp - gene pairs
+	wget https://storage.googleapis.com/gtex_analysis_v7/single_tissue_eqtl_data/GTEx_Analysis_v7_eQTL.tar.gz
+	tar -xvzf GTEx_Analysis_v7_eQTL.tar.gz
+	cd GTEx_Analysis_v7_eQTL
+	zcat *.v7.signif_variant_gene_pairs.txt.gz | cut -f1,2 | sort | uniq >all.v7.signif_variant_gene_pairs.txt
+	gzip all.v7.signif_variant_gene_pairs.txt
+
+	zcat ${TISSUE}.v7.signif_variant_gene_pairs.txt.gz | cut -f1,2 >../gene_snp.txt
+
+	# get annotation
+	wget https://storage.googleapis.com/gtex_analysis_v7/reference/GTEx_Analysis_2016-01-15_v7_WholeGenomeSeq_635Ind_PASS_AB02_GQ20_HETX_MISS15_PLINKQC.lookup_table.txt.gz
+	zcat GTEx_Analysis_2016-01-15_v7_WholeGenomeSeq_635Ind_PASS_AB02_GQ20_HETX_MISS15_PLINKQC.lookup_table.txt.gz | awk '{print \$1,\$3,0,\$2  }' OFS='\t' >../eqtl.map
+	"""
+
+}
+
+if (params.grch_version != '37') {
+
+	process lift_coordinates {
+
+		input:
+			file MAP from eqtl_premap
+			file GRCH_VERSION from params.grch_version
+
+		output:
+			file 'out.map' into eqtl_map
+
+		"""
+		lift_coordinates --bim ${MAP} --old 37 --new ${GRCH_VERSION}
+		"""
+
+	}
+
+} else {
+
+	eqtl_map = eqtl_premap
+
+}
+
+process filter_eqtl {
+
+	input:
+		file MAP from bim
+		file EQTL_MAP from eqtl_map
+		file EQTL from gene_snp
+
+	output:
+		file 'eqtl2gene.tsv'
+
+	"""
+	#!/usr/bin/env Rscript
+
+	library(tidyverse)
+	library(magrittr)
+
+	map <- read_tsv('${MAP}') %>%
+	set_colnames(c('chr','snp', 'cm', 'pos'))
+	eqtl_map <- read_tsv('${BIM}') %>%
+		set_colnames(c('chr','snp', 'cm', 'pos'))
+
+	common_snps <- inner_join(map, eqtl_map, by = c('chr','cm','pos'), 
+														suffix = c('_bim','_gtex'))
+
+	read_tsv('${EQTL}') %>%
+			inner_join(common_snps, by = c('variant_id' = 'snp_gtex')) %>%
+			select(snp_bim, gene_id) %>%
+			rename(snp = snp_bim) %>%
+			write_tsv('eqtl2gene.tsv')
+	"""
+
+}

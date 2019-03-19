@@ -3,8 +3,8 @@
 chunk_size = 5000000
 
 bed = file("${params.bfile}.bed")
-bim = file("${bed.baseName}.bim")
-fam = file("${bed.baseName}.fam")
+bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
+fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
 strand_info = file(params.strand_info)
 params.out = '.'
