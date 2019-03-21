@@ -1,0 +1,45 @@
+#!/usr/bin/env nextflow
+
+params.out = "."
+
+// gwas
+bed = file("${params.bfile}.bed")
+bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
+fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+
+// parameters
+params.N = 10
+
+process run_boost {
+
+    input:
+        each I from 1..params.N
+        val N from params.N
+        file BED from bed
+        file BIM from bim
+        file FAM from fam
+
+    output:
+        file "epipart*" into parts
+
+    """
+    plink --bfile ${BED.baseName} --fast-epistasis boost --parallel ${I} ${N} --out epi_part
+    """
+
+}
+
+process join_parts {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file "epipart.*" from parts.collect()
+
+    output:
+        file "scored_interactions.boost.txt"
+
+    """
+    plink --epistasis-summary-merge epi_part --out scored_interactions.boost.txt
+    """
+
+}
