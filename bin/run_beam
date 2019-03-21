@@ -1,3 +1,5 @@
+#!/usr/bin/env nextflow
+
 params.out = "."
 
 // gwas
@@ -6,7 +8,7 @@ bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
 fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
 n_snps = Channel
-        .fromPath("${BIM}")
+        .fromPath("${bim}")
         .splitText()
         .count()
 
