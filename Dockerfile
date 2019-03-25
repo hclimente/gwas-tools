@@ -29,6 +29,7 @@ RUN wget https://sites.fas.harvard.edu/\~junliu/BEAM/BEAM_linux.tar \
     && tar -xvf BEAM_linux.tar && apt-get update && apt-get install -y lib32z1 lib32stdc++6
 RUN wget http://nce.ads.uga.edu/~romdhane/AntEpiSeeker/AntEpiSeeker1.0_linux.zip \
     && unzip AntEpiSeeker1.0_linux.zip && mv AntEpiSeeker1.0_linux/AntEpiSeeker .
+RUN apt-get update && apt-get install -y procps
 RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20190304.zip \
     && unzip plink_linux_x86_64_20190304.zip 
 WORKDIR /home/docker
