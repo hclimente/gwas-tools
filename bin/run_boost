@@ -20,10 +20,10 @@ process run_boost {
         file FAM from fam
 
     output:
-        file "epipart*" into parts
+        file "part.epi.??.${I}" into parts
 
     """
-    plink --bfile ${BED.baseName} --fast-epistasis boost --parallel ${I} ${N} --out epi_part
+    plink --bfile ${BED.baseName} --fast-epistasis boost --parallel ${I} ${N} --out part
     """
 
 }
@@ -33,13 +33,13 @@ process join_parts {
     publishDir "$params.out", overwrite: true, mode: "copy"
 
     input:
-        file "epipart.*" from parts.collect()
+        file "*" from parts.collect()
 
     output:
         file "scored_interactions.boost.txt"
 
     """
-    plink --epistasis-summary-merge epi_part --out scored_interactions.boost.txt
+    cat `ls -v part.epi.*` | sed 's/^ \\+//' | sed 's/ \\+/\t/g' | sed 's/\t\$//' >scored_interactions.boost.txt
     """
 
 }
