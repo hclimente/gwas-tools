@@ -86,7 +86,7 @@ process ped2gen {
         file MAP from map
     output:
         set 'out.gen','out.sample' into gen
-	file 'out.sample' into sample
+        file 'out.sample' into sample
 
     script:
     template 'io/ped2gen.sh'
@@ -136,7 +136,7 @@ process merge_gens {
 
     input:
         file 'imputed*.gen' from imputed_gens.collect()
-	file 'imputed*.sample' from imputed_samples.collect()
+        file 'imputed*.sample' from imputed_samples.collect()
 
     output:
         set 'merged.gen', 'merged.sample' into imputed_gen
