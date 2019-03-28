@@ -30,6 +30,7 @@ RUN wget https://sites.fas.harvard.edu/\~junliu/BEAM/BEAM_linux.tar \
 RUN wget http://nce.ads.uga.edu/~romdhane/AntEpiSeeker/AntEpiSeeker1.0_linux.zip \
     && unzip AntEpiSeeker1.0_linux.zip && mv AntEpiSeeker1.0_linux/AntEpiSeeker .
 RUN apt-get update && apt-get install -y procps
+RUN wget https://gwas.biosciencedbc.jp/SNPInterForest/rf && chmod a+x rf && mv rf SNPInterForest
 RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20190304.zip \
     && unzip plink_linux_x86_64_20190304.zip 
 WORKDIR /home/docker
