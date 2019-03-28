@@ -5,21 +5,35 @@ params.out = '.'
 snp2gene = file(params.snp2gene)
 loki = file(params.loki)
 
-process get_gene_models {
+process get_genes {
 
     input:
-        file LOKI from loki
         file SNP2GENE from snp2gene
 
     output:
-        file 'biofilter.gene.models' into snp_models
+        file GENES into genes
 
     """
-    tail -n +2 ${SNP2GENE} | cut -f2 | sort | uniq >genes
+    cut -f2 ${SNP2GENE} | tail -n +2 | sort | uniq >genes
+    """
 
+}
+
+process get_gene_models {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file LOKI from loki
+        file GENES from genes
+
+    output:
+        file 'biofilter.gene.models' into gene_models
+
+    """
     cat << EOF >parameters.txt
     KNOWLEDGE           ${LOKI}
-    GENE_FILE           genes
+    GENE_FILE           ${GENES}
     MODEL               gene
     EOF
 
@@ -28,16 +42,16 @@ process get_gene_models {
 
 }
 
+gene_models. splitText( by: 1000, keepHeader: true, file: true ).set { gene_models_split }
+
 process make_snp_models {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
-
     input:
-        file SNP_MODELS from snp_models
+        file SNP_MODELS from gene_models_split
         file SNP2GENE from snp2gene
 
     output:
-        file 'snp_models.tsv'
+        file 'snp_models_split.tsv' into snp_models_split
 
     """
     #!/usr/bin/env Rscript
@@ -53,7 +67,23 @@ process make_snp_models {
         rename(gene_1 = `#gene1`, gene_2 = gene2) %>%
         select(snp_1, gene_1, snp_2, gene_2, `score(src-grp)`) %>%
         separate(`score(src-grp)`, into = c('num_sources', 'num_instances'), sep = '-') %>%
-        write_tsv('snp_models.tsv')
+        write_tsv('snp_models_split.tsv', col_names = FALSE)
     """
 
+}
+
+process join_snp_models {
+
+    publishDir "$params.out", overwrite: true, mode: "move"
+
+    input:
+        file 'snp_models_split*' from snp_models_split.collect()
+
+    output:
+        file 'snp_models.tsv'
+
+    """
+    echo "snp_1\tgene_1\tsnp_2\tgene_2\tnum_sources\tnum_instances" >snp_models.tsv
+    cat snp_models_split* >>snp_models.tsv
+    """
 }
