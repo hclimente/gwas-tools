@@ -57,33 +57,33 @@ process run_AntEpiSeeker {
 
     input:
         val N from n_snps
-        file aes_data
+        file AES_IN from aes_data
 
     output:
-        file "scored_interactions.aes.txt"
+        file "scored_interactions.antepiseeker.txt"
 
     """
     cat << EOF >parameters.txt
-    iAntCount        1000         // number of ants
+    iAntCount        5000         // number of ants
     iItCountLarge    ${N * 0.1}   // number of iterations for the large haNplotypes
     iItCountSmall    ${N * 0.05}  // number of iterations for the small haplotypes
     alpha            1            // weight given to pheromone deposited by ants
     iTopModel        1000         // number of top ranking haplotypes in the first stage
-    iTopLoci         200          // number of loci with top ranking pheromone in the first stage
+    iTopLoci         1000         // number of loci with top ranking pheromone in the first stage
     rou              0.05         // evaporation rate in Ant Colony Optimizaion
     phe              100          // initial pheromone level for each locus
     largehapsize     6            // size of the large haplotypes
     smallhapsize     3            // size of the small haplotypes
     iEpiModel        2            // number of SNPs in an epistatic interaction
     pvalue          0.01          // p value threshold (after Bonferroni correction)
-    INPFILE         genotypes.aes // input file name for case-control genotype data
+    INPFILE         ${AES_IN}     // input file name for case-control genotype data
     OUTFILE         result.txt    // output file name for detected epistatic interactions
     EOF
 
     AntEpiSeeker
 
-    echo -e "snp1\\tsnp2\\tchi2\\tp" >scored_interactions.aes.txt
-    tail -n+3 result.txt | sed -E 's/[0-9]+\\(//g' | sed 's/)//g' | sed -E 's/[ \\t]+/\\t/g' >>scored_interactions.aes.txt
+    echo -e "snp1\\tsnp2\\tchi2\\tp" >scored_interactions.antepiseeker.txt
+    tail -n+3 result.txt | sed -E 's/[0-9]+\\(//g' | sed 's/)//g' | sed -E 's/[ \\t]+/\\t/g' >>scored_interactions.antepiseeker.txt
     """
 
 }
