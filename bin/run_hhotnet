@@ -49,47 +49,6 @@ process construct_similarity_matrix {
 
 }
 
-process permute_network_keep_connectivity {
-
-    input:
-        file HHNET from hhnet_path
-        each I from 1..Math.round(params.N/2)
-        file EDGE_LIST from edge_list_2
-
-    output:
-        file "edge_list_${I}.tsv" into network_k_perms
-
-    """
-    python ${HHNET}/permute_network.py \
-        -i ${EDGE_LIST} \
-        -s ${I} \
-        -c \
-        -o edge_list_${I}.tsv
-    """
-
-}
-
-process permute_network_change_connectivity {
-
-    input:
-        file HHNET from hhnet_path
-        each I from Math.round(params.N/2 + 1)..params.N
-        file EDGE_LIST from edge_list_2
-
-    output:
-        file "edge_list_${I}.tsv" into network_c_perms
-
-    """
-    python ${HHNET}/permute_network.py \
-        -i ${EDGE_LIST} \
-        -s ${I} \
-        -o edge_list_${I}.tsv
-    """
-
-}
-
-network_perms = network_k_perms .mix (network_c_perms)
-
 process find_permutation_bins {
 
     input:
