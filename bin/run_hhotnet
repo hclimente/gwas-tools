@@ -1,0 +1,185 @@
+#!/usr/bin/env nextflow
+
+params.out = "."
+params.N = 100
+
+tab2 = file(params.tab2)
+scores = file(params.scores)
+hhnet_path = file(params.hhnet_path)
+
+process make_network {
+
+    input:
+        file TAB2 from tab2
+
+    output:
+        file 'node_index.tsv' into node_index_3, node_index_4, node_index_5
+        file 'edge_list.tsv' into edge_list_1, edge_list_2, edge_list_3, edge_list_5
+
+    """
+    #!/usr/bin/env Rscript
+    library(tidyverse)
+    library(igraph)
+
+    net <- read_tsv("${TAB2}") %>%
+        rename(gene1 = `Official Symbol Interactor A`, gene2 = `Official Symbol Interactor B`) %>%
+        select(gene1, gene2) %>%
+        graph_from_data_frame(directed = FALSE)
+
+    as_edgelist(net, names = FALSE) %>% as.data.frame %>% write_tsv('edge_list.tsv', col_names = FALSE)
+    tibble(id = V(net), names = names(V(net))) %>% write_tsv('node_index.tsv', col_names = FALSE)
+    """
+
+}
+
+process construct_similarity_matrix {
+
+    input:
+        file EDGE_LIST from edge_list_1
+        file HHNET from hhnet_path
+
+    output:
+        file 'similarity_matrix.h5' into similarity
+
+    """
+    python ${HHNET}/construct_similarity_matrix.py \
+        -i   ${EDGE_LIST} \
+        -o   similarity_matrix.h5
+    """
+
+}
+
+process permute_network_keep_connectivity {
+
+    input:
+        file HHNET from hhnet_path
+        each I from 1..Math.round(params.N/2)
+        file EDGE_LIST from edge_list_2
+
+    output:
+        file "edge_list_${I}.tsv" into network_k_perms
+
+    """
+    python ${HHNET}/permute_network.py \
+        -i ${EDGE_LIST} \
+        -s ${I} \
+        -c \
+        -o edge_list_${I}.tsv
+    """
+
+}
+
+process permute_network_change_connectivity {
+
+    input:
+        file HHNET from hhnet_path
+        each I from Math.round(params.N/2 + 1)..params.N
+        file EDGE_LIST from edge_list_2
+
+    output:
+        file "edge_list_${I}.tsv" into network_c_perms
+
+    """
+    python ${HHNET}/permute_network.py \
+        -i ${EDGE_LIST} \
+        -s ${I} \
+        -o edge_list_${I}.tsv
+    """
+
+}
+
+network_perms = network_k_perms .mix (network_c_perms)
+
+process find_permutation_bins {
+
+    input:
+        file HHNET from hhnet_path
+        file SCORES from scores
+        file NODE_INDEX from node_index_3
+        file EDGE_LIST from edge_list_3
+
+    output:
+        file 'score_bins.tsv' into bins
+
+    """
+    python ${HHNET}/find_permutation_bins.py \
+        -gsf ${SCORES} \
+        -igf ${NODE_INDEX} \
+        -elf ${EDGE_LIST} \
+        -ms  1000 \
+        -o   score_bins.tsv
+    """
+
+}
+
+process permute_scores {
+
+    input:
+        file HHNET from hhnet_path
+        each I from 1..params.N
+        file SCORES from scores
+        file BINS from bins
+
+    output:
+        set val(I),"scores_permutation_${I}.tsv" into score_perms
+
+    """
+    python ${HHNET}/permute_scores.py \
+        -i  ${SCORES} \
+        -bf ${BINS} \
+        -s  ${I} \
+        -o  scores_permutation_${I}.tsv
+    """
+
+}
+
+all_scores = Channel.from([[0,scores]]).mix(score_perms)
+
+process construct_hierarchy {
+
+    input:
+        file HHNET from hhnet_path
+        file SIMILARITY from similarity
+        set I,file(SCORES) from all_scores
+        file NODE_INDEX from node_index_4
+
+    output:
+        file "hierarchy_edge_list_${I}" into h_edges
+        file "hierarchy_index_list_${I}" into h_idx
+
+    """
+    python ${HHNET}/construct_hierarchy.py \
+        -smf  ${SIMILARITY} \
+        -igf  ${NODE_INDEX} \
+        -gsf  ${SCORES} \
+        -helf hierarchy_edge_list_${I} \
+        -higf hierarchy_index_list_${I}
+    """
+
+}
+
+process process_hierarchies {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file HHNET from hhnet_path
+        file '*' from h_idx.collect()
+        file '*' from h_edges.collect()
+
+    output:
+        file 'clusters.tsv' into clusters
+        file 'sizes.pdf'
+
+    """
+    python ${HHNET}/process_hierarchies.py \
+        -oelf hierarchy_edge_list_0 \
+        -oigf hierarchy_index_list_0 \
+        -pelf \$(for i in `seq ${params.N}`; do echo " hierarchy_edge_list_"\$i" "; done) \
+        -pigf \$(for i in `seq ${params.N}`; do echo " hierarchy_index_list_"\$i" "; done) \
+        -cf   clusters.tsv \
+        -pl   network score \
+        -pf   sizes.pdf
+    """
+
+}
