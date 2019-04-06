@@ -28,7 +28,7 @@ process download_gencode {
 
     input:
         val GENCODE_VERSION from params.gencode
-        val GENOME_VERSION from params.genome
+        val GRCH_VERSION from params.genome
 
     output:
         file 'gff3' into gff
