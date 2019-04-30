@@ -10,7 +10,15 @@ if [[ ${CHR} == *X* ]]
         chrXflags="\$chrXflags -Xpar"
     fi
     grep "^23 " ${GEN} | sed 's/^23/X/' >region.gen
+    grep "^25 " ${GEN} | sed 's/^25/X/' >>region.gen
     grep "^X " ${GEN} | cat >>region.gen
+
+elif [[ ${CHR} == *Y* ]]
+  then
+  
+    grep "^24 " ${GEN} | sed 's/^24/Y/' >region.gen
+    grep "^Y " ${GEN} | cat >>region.gen
+  
 else
     # create a gen with only the chromosome
     # else, impute2 doesn't detect any snp
