@@ -33,4 +33,5 @@ RUN apt-get update && apt-get install -y procps
 RUN wget https://gwas.biosciencedbc.jp/SNPInterForest/rf && chmod a+x rf && mv rf SNPInterForest
 RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20190304.zip \
     && unzip plink_linux_x86_64_20190304.zip 
+RUN R -e "install.packages('ranger', repos = 'http://cran.us.r-project.org')"
 WORKDIR /home/docker

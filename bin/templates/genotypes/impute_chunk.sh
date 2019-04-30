@@ -37,6 +37,10 @@ impute2 -prephase_g \
 
 # impute only on the screened SNPs
 # only genotyped snps are included in the panel
+
+# safeguard against impute not imputing any SNP
+awk '\$3 >= ${START}' prephased.gen | awk '\$3 <= ${END}' >imputed.gen
+
 impute2 -use_prephased_g \
 -known_haps_g prephased.gen_haps \
 -m ${REFERENCE}/genetic_map_chr${CHR}_combined_b37.txt \
@@ -48,4 +52,4 @@ impute2 -use_prephased_g \
 \$chrXflags \
 -k_hap ${SAMPLES_REFERENCE} \
 -os 2 -o imputed.gen \
--strand_g strand_g_file || ( awk '\$3 >= ${START}' region.gen | awk '\$3 <= ${END}' >imputed.gen && exit 77 )
+-strand_g strand_g_file || exit 77
