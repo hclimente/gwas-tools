@@ -4,7 +4,7 @@
 # chunks
 
 chrs = {}
-sex_chromosomes = {'23': 'X', 'X': 'X', 
+sex_chromosomes = {'23': 'X', '25': 'X', 'X': 'X', 
                    '24': 'Y', 'Y': 'Y'}
 
 if "${GENOME}" ==  'GRCh38':
