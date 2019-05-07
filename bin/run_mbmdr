@@ -95,7 +95,6 @@ process compute_permutations {
 
     input:
         each I from 1..params.N
-        val N from params.N
         file TOP from topFile_permutations
         file INPUT from mbmdrFile_3
         val MODE from params.mode
@@ -104,7 +103,7 @@ process compute_permutations {
         file "perm_*" into permutFiles
 
     """
-    mbmdr --${MODE} --gammastep3 -q ${N} -o perm_${I}.txt -t ${TOP} ${INPUT}
+    mbmdr --${MODE} --gammastep3 -q 1 -o perm_${I}.txt -t ${TOP} ${INPUT}
     """
 
 }
