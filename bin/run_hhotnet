@@ -43,8 +43,8 @@ process construct_similarity_matrix {
 
     """
     python ${HHNET}/construct_similarity_matrix.py \
-        -i   ${EDGE_LIST} \
-        -o   similarity_matrix.h5
+-i   ${EDGE_LIST} \
+-o   similarity_matrix.h5
     """
 
 }
@@ -62,11 +62,11 @@ process find_permutation_bins {
 
     """
     python ${HHNET}/find_permutation_bins.py \
-        -gsf ${SCORES} \
-        -igf ${NODE_INDEX} \
-        -elf ${EDGE_LIST} \
-        -ms  1000 \
-        -o   score_bins.tsv
+-gsf ${SCORES} \
+-igf ${NODE_INDEX} \
+-elf ${EDGE_LIST} \
+-ms  1000 \
+-o   score_bins.tsv
     """
 
 }
@@ -84,10 +84,10 @@ process permute_scores {
 
     """
     python ${HHNET}/permute_scores.py \
-        -i  ${SCORES} \
-        -bf ${BINS} \
-        -s  ${I} \
-        -o  scores_permutation_${I}.tsv
+-i  ${SCORES} \
+-bf ${BINS} \
+-s  ${I} \
+-o  scores_permutation_${I}.tsv
     """
 
 }
@@ -108,11 +108,11 @@ process construct_hierarchy {
 
     """
     python ${HHNET}/construct_hierarchy.py \
-        -smf  ${SIMILARITY} \
-        -igf  ${NODE_INDEX} \
-        -gsf  ${SCORES} \
-        -helf hierarchy_edge_list_${I} \
-        -higf hierarchy_index_list_${I}
+-smf  ${SIMILARITY} \
+-igf  ${NODE_INDEX} \
+-gsf  ${SCORES} \
+-helf hierarchy_edge_list_${I} \
+-higf hierarchy_index_list_${I}
     """
 
 }
@@ -132,13 +132,14 @@ process process_hierarchies {
 
     """
     python ${HHNET}/process_hierarchies.py \
-        -oelf hierarchy_edge_list_0 \
-        -oigf hierarchy_index_list_0 \
-        -pelf \$(for i in `seq ${params.N}`; do echo " hierarchy_edge_list_"\$i" "; done) \
-        -pigf \$(for i in `seq ${params.N}`; do echo " hierarchy_index_list_"\$i" "; done) \
-        -cf   clusters.tsv \
-        -pl   network score \
-        -pf   sizes.pdf
+-oelf hierarchy_edge_list_0 \
+-oigf hierarchy_index_list_0 \
+-pelf \$(for i in `seq ${params.N}`; do echo " hierarchy_edge_list_\$i"; done) \
+-pigf \$(for i in `seq ${params.N}`; do echo " hierarchy_index_list_\$i"; done) \
+-cf   clusters.tsv \
+-lsb  1 \
+-pl   network score \
+-pf   sizes.pdf
     """
 
 }
