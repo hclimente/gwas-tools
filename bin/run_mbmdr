@@ -8,7 +8,7 @@ bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
 fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
 // parameters
-params.N = 10
+params.N = 1000
 params.mode = 'binary'
 
 process bed2ped {
