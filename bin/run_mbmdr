@@ -64,7 +64,7 @@ process compute_top_vectors {
         file "top*.txt" into topFiles
 
     """
-    mbmdr --${MODE} --gammastep1 -i ${I} -N ${N} ${INPUT}
+    mbmdr --${MODE} --gammastep1 -r 2019 -i ${I} -N ${N} ${INPUT}
     """
 
 }
@@ -81,7 +81,7 @@ process merge_top_vectors {
         file "topFile.txt" into topFile
 
     """
-    mbmdr --${MODE} --gammastep2 -N ${N} ${INPUT}
+    mbmdr --${MODE} --gammastep2 -r 2019 -N ${N} ${INPUT}
     """
 
 }
@@ -103,7 +103,7 @@ process compute_permutations {
         file "perm_*" into permutFiles
 
     """
-    mbmdr --${MODE} --gammastep3 -q 1 -o perm_${I}.txt -t ${TOP} ${INPUT}
+    mbmdr --${MODE} --gammastep3 -r 2019 -p 1 -o perm_${I}.txt -t ${TOP} ${INPUT}
     """
 
 }
@@ -123,7 +123,7 @@ process merge_permutations {
         file "*_output.txt"
 
     """
-    mbmdr --${MODE} --gammastep4 -c perm_ -q ${N} -t ${TOP} ${INPUT}
+    mbmdr --${MODE} --gammastep4 -r 2019 -c perm_ -q ${N} -t ${TOP} ${INPUT}
     """
 
 }
