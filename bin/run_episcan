@@ -1,0 +1,59 @@
+
+#!/usr/bin/env nextflow
+
+params.out = '.'
+
+// gwas
+bed = file("${params.bfile}.bed")
+bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
+fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+
+process ped2r {
+
+        input:
+          file BED from bed
+          file BIM from bim
+          file FAM from fam
+
+        output:
+          file 'gwas.RData' into rgwas
+
+        script:
+        template 'io/bed2r.sh'
+
+}
+
+process episcan {
+
+        publishDir "$params.out", overwrite: true, mode: "copy"
+
+        input:
+          file RGWAS from rgwas
+
+        output:
+          file 'scored_interactions.episcan.txt'
+
+        script:
+        """
+        #!/usr/bin/env Rscript
+
+        library(episcan)
+
+        load('${RGWAS}')
+
+        
+        # read dataset
+        X <- as(gwas[['genotypes']], 'numeric') %>% as.big.matrix
+        y <- gwas[['fam']][['affected']] - 1
+
+        episcan(geno = X,
+                pheno = y,
+                phetype = "quantitative",
+                outfile = "scored_interactions.episcan", 
+                suffix = ".txt", 
+                zpthres = 0.9, 
+                chunksize = 20, 
+                scale = TRUE)
+        """
+
+}
