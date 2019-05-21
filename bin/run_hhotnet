@@ -41,7 +41,13 @@ process vegas2hotnet {
         file 'scores.ht' into scores_perm, scores_bins, scores_anal
 
     """
-    cut -f2,8 ${VEGAS} | tail -n+2 >scores.ht
+    #!/usr/bin/env Rscript
+    library(tidyverse)
+
+    read_tsv('${VEGAS}') %>%
+        mutate(score = -log10(Pvalue)) %>%
+        select(Gene, score) %>%
+        write_tsv('scores.ht', col_names = FALSE)
     """
 
 }
