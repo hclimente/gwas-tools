@@ -4,7 +4,7 @@ params.out = "."
 params.N = 100
 
 tab2 = file(params.tab2)
-scores = file(params.scores)
+vegas = file(params.scores)
 hhnet_path = file(params.hhnet_path)
 
 process make_network {
@@ -32,6 +32,20 @@ process make_network {
 
 }
 
+process vegas2hotnet {
+
+    input:
+        file VEGAS from vegas
+
+    output:
+        file 'scores.ht' into scores_perm, scores_bins, scores_anal
+
+    """
+    cut -f2,8 ${VEGAS} | tail -n+2 >scores.ht
+    """
+
+}
+
 process construct_similarity_matrix {
 
     input:
@@ -53,7 +67,7 @@ process find_permutation_bins {
 
     input:
         file HHNET from hhnet_path
-        file SCORES from scores
+        file SCORES from scores_perm
         file NODE_INDEX from node_index_3
         file EDGE_LIST from edge_list_3
 
@@ -76,7 +90,7 @@ process permute_scores {
     input:
         file HHNET from hhnet_path
         each I from 1..params.N
-        file SCORES from scores
+        file SCORES from scores_bins
         file BINS from bins
 
     output:
@@ -92,7 +106,7 @@ process permute_scores {
 
 }
 
-all_scores = Channel.from([[0,scores]]).mix(score_perms)
+all_scores = Channel.from([[0,scores_anal]]).mix(score_perms)
 
 process construct_hierarchy {
 
