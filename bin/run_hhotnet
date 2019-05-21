@@ -106,7 +106,7 @@ process permute_scores {
 
 }
 
-all_scores = Channel.from([[0,scores_anal]]).mix(score_perms)
+all_scores = scores_anal. map {it->[ 0, it]} .mix(score_perms)
 
 process construct_hierarchy {
 
