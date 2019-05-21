@@ -1,0 +1,48 @@
+#!/usr/bin/env nextflow
+
+params.out = '.'
+
+// annotation
+tab2 = file(params.tab2)
+vegas = file(params.vegas)
+
+process heinz {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file VEGAS from vegas
+        file TAB2 from tab2
+
+    output:
+        file 'selected_genes.heinz.txt' 
+
+    """
+    #!/usr/bin/env Rscript
+
+    library(tidyverse)
+    library(igraph)
+    library(BioNet)
+
+    # search subnetworks
+    vegas <- read_tsv('${VEGAS}') %>% 
+        select(Gene, Pvalue) %>%
+        mutate(score = qnorm(1 - (Pvalue/2)))
+    scores <- vegas\$score
+    names(scores) <- vegas\$Gene
+
+    net <- read_tsv("${TAB2}") %>%
+        rename(gene1 = `Official Symbol Interactor A`, 
+               gene2 = `Official Symbol Interactor B`) %>%
+        filter(gene1 %in% names(scores) & gene2 %in% names(scores)) %>%
+        select(gene1, gene2) %>%
+        graph_from_data_frame(directed = FALSE)
+
+    selected <- runFastHeinz(net, scores)
+    
+    tibble(gene = names(V(selected))) %>% 
+        write_tsv('selected_genes.heinz.txt')
+    """
+
+
+}
