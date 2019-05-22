@@ -157,7 +157,6 @@ process process_hierarchies {
 -pelf \$(for i in `seq ${params.N}`; do echo " hierarchy_edge_list_\$i"; done) \
 -pigf \$(for i in `seq ${params.N}`; do echo " hierarchy_index_list_\$i"; done) \
 -cf   clusters.tsv \
--lsb  1 \
 -pl   network score \
 -pf   sizes.pdf
     """
