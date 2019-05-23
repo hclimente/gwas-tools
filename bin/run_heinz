@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 params.out = '.'
+params.fdr = 0.01
 
 // annotation
 tab2 = file(params.tab2)
@@ -13,6 +14,7 @@ process heinz {
     input:
         file VEGAS from vegas
         file TAB2 from tab2
+        val FDR from params.fdr
 
     output:
         file 'selected_genes.heinz.txt' 
@@ -25,11 +27,11 @@ process heinz {
     library(BioNet)
 
     # search subnetworks
-    vegas <- read_tsv('${VEGAS}') %>% 
-        select(Gene, Pvalue) %>%
-        mutate(score = qnorm(1 - (Pvalue/2)))
-    scores <- vegas\$score
-    names(scores) <- vegas\$Gene
+    vegas <- read_tsv('${VEGAS}')
+    pvals <- vegas\$Pvalue
+    names(pvals) <- vegas\$Gene
+    fb <- fitBumModel(pvals, plot = FALSE)
+    scores <- scoreNodes(net, fb, fdr = ${FDR})
 
     net <- read_tsv("${TAB2}") %>%
         rename(gene1 = `Official Symbol Interactor A`, 
