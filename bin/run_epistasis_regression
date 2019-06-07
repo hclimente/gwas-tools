@@ -2,6 +2,8 @@
 
 params.out = "."
 
+params.covar = ''
+
 // gwas
 bed = file("${params.bfile}.bed")
 bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
@@ -10,21 +12,49 @@ fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 // parameters
 params.N = 10
 
-process run_regression {
+if (params.covar == '') {
 
-    input:
-        each I from 1..params.N
-        val N from params.N
-        file BED from bed
-        file BIM from bim
-        file FAM from fam
+   process run_regression {
 
-    output:
-        file "part.epi.??.${I}" into parts
+       input:
+           each I from 1..params.N
+           val N from params.N
+           file BED from bed
+           file BIM from bim
+           file FAM from fam
 
-    """
-    plink --bfile ${BED.baseName} --epistasis --parallel ${I} ${N} --allow-no-sex --out part
-    """
+       output:
+           file "part.epi.??.${I}" into parts
+
+       """
+       plink --bfile ${BED.baseName} --epistasis --parallel ${I} ${N} --allow-no-sex --out part
+       """
+
+    }
+
+} else {
+
+    covar = file(params.covar)
+
+   process run_regression_with_covars {
+
+       input:
+           each I from 1..params.N
+           val N from params.N
+           file BED from bed
+           file BIM from bim
+           file FAM from fam
+           file COVAR from covar
+
+       output:
+           file "part.epi.??.${I}" into parts
+
+       """
+       plink --bfile ${BED.baseName} --epistasis --covar ${COVAR} --parallel ${I} ${N} --allow-no-sex --out part
+       """
+
+    }
+
 
 }
 
