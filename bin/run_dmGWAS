@@ -35,13 +35,10 @@ process run_dmGWAS {
         select(interactorA, interactorB)
 
     modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, r = 0.1)
-    top <- chooseModule(modules)
+    top <- simpleChoose(modules)
 
-    genesets <- lapply(top\$modules, paste, collapse = ',')
-    data_frame(gene = unlist(genesets)) %>%
-        separate_rows(gene, sep = ',') %>%
-        mutate(gene = unique(gene)) %>%
-        write_tsv('subnetworks.tsv')
+    data_frame(gene = names(V(top$subnetwork))) %>%
+        write_tsv('selected_genes.dmgwas.tsv')
     """
 
 }
