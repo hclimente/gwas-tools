@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 params.out = '.'
-params.fdr = 0.01
+params.fdr = 0.1
 
 // annotation
 tab2 = file(params.tab2)
@@ -26,25 +26,25 @@ process heinz {
     library(igraph)
     library(BioNet)
 
-    # search subnetworks
     vegas <- read_tsv('${VEGAS}')
+    net <- read_tsv("${TAB2}") %>%
+        rename(gene1 = `Official Symbol Interactor A`, 
+               gene2 = `Official Symbol Interactor B`) %>%
+        filter(gene1 %in% vegas\$Gene & gene2 %in% vegas\$Gene) %>%
+        select(gene1, gene2) %>%
+        graph_from_data_frame(directed = FALSE)
+    vegas <- filter(vegas, Gene %in% names(V(net)))
+
+    # search subnetworks
     pvals <- vegas\$Pvalue
     names(pvals) <- vegas\$Gene
     fb <- fitBumModel(pvals, plot = FALSE)
     scores <- scoreNodes(net, fb, fdr = ${FDR})
-
-    net <- read_tsv("${TAB2}") %>%
-        rename(gene1 = `Official Symbol Interactor A`, 
-               gene2 = `Official Symbol Interactor B`) %>%
-        filter(gene1 %in% names(scores) & gene2 %in% names(scores)) %>%
-        select(gene1, gene2) %>%
-        graph_from_data_frame(directed = FALSE)
 
     selected <- runFastHeinz(net, scores)
     
     tibble(gene = names(V(selected))) %>% 
         write_tsv('selected_genes.heinz.txt')
     """
-
 
 }
