@@ -88,6 +88,6 @@ process run_scones {
         file 'cones.tsv'
 
     script:
-    template 'discovery/run_scones.R'
+    template 'discovery/run_old_scones.R'
 
 }
