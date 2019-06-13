@@ -82,26 +82,27 @@ process convert_glist_to_hgnc {
 //////////////////////////////////////////////
 ///          SNP ASSOCIATION TEST          ///
 //////////////////////////////////////////////
-if (params.covar == '') {
+if (params.snp_association == ''){
+  if (params.covar == '') {
 
-    process compute_chisq {
+      process compute_chisq {
 
-        input:
-            file BED from bed
-            file BIM from bim
-            file FAM from fam
+          input:
+              file BED from bed
+              file BIM from bim
+              file FAM from fam
 
-        output:
-            file 'snp_association' into snp_association
+          output:
+              file 'snp_association' into snp_association
 
-        """
-        plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc 
-        awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc  >snp_association
-        """
+          """
+          plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc 
+          awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc  >snp_association
+          """
 
-    }
+      }
 
-} else {
+  } else {
 
     covar = file(params.covar)
 
@@ -122,27 +123,39 @@ if (params.covar == '') {
         """
 
     }
+  }
+} else {
+
+  snp_association = file(params.snp_association)
 
 }
 
 //////////////////////////////////////////////
 ///         EXTRACT CONTROLS FOR LD        ///
 //////////////////////////////////////////////
-process extract_controls {
+if (params.ld_controls = '') {
+  process extract_controls {
 
-    input:
-        file BED from bed
-        file bim
-        file fam
+      input:
+          file BED from bed
+          file bim
+          file fam
 
-    output:
-        file 'plink.bed' into bed_controls
-        file 'plink.bim' into bim_controls
-        file 'plink.fam' into fam_controls
+      output:
+          file 'plink.bed' into bed_controls
+          file 'plink.bim' into bim_controls
+          file 'plink.fam' into fam_controls
 
-    """
-    plink --bfile ${BED.baseName} --filter-controls --make-bed
-    """
+      """
+      plink --bfile ${BED.baseName} --filter-controls --make-bed
+      """
+
+  }
+} else {
+
+  bed_controls = file("${params.ld_controls}.bed")
+  bim_controls = file("${bed_controls.getParent()}/${bed_controls.getBaseName()}.bim")
+  fam_controls = file("${bed_controls.getParent()}/${bed_controls.getBaseName()}.fam")
 
 }
 
