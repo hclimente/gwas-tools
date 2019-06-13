@@ -15,8 +15,7 @@ process run_dmGWAS {
         file TAB2
 
     output:
-        file 'subnetworks.tsv'
-        file 'scored_subnetworks.tsv'
+        file 'selected_genes.dmgwas.txt'
 
     """
     #!/usr/bin/env Rscript
