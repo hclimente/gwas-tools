@@ -46,16 +46,27 @@ process grow_forest {
     gwas <- as_tibble(X) %>%
         mutate(phenotype = Y)
 
-    rf <- ranger(phenotype ~ ., data = gwas)
+    rf <- ranger(phenotype ~ ., data = gwas, importance = 'impurity')
     save(rf, file = 'forest.RData')
 
     snps <- lapply(seq(1, 500), function(i) {
-        snps <- ranger::treeInfo(rf,i)[['splitvarName']] %>% unique %>% na.omit %>% sort
-        expand.grid(snps, snps) %>% as_tibble %>% rename(snp1 = Var1, snp2 = Var2)
+        nodes <- treeInfo(rf,i)[['splitvarName']]
+        names(nodes) <- treeInfo(rf,i)[['nodeID']]
+        bind_rows(
+                  treeInfo(rf,i)[,c('nodeID','leftChild')] %>% rename(otherNodeID = leftChild),
+                  treeInfo(rf,i)[,c('nodeID','rightChild')] %>% rename(otherNodeID = rightChild)
+                 ) %>%
+            mutate(snp1 = nodes[nodeID + 1], snp2 = nodes[otherNodeID + 1]) %>%
+            filter(!is.na(snp2)) %>%
+            select(snp1, snp2)
     }) %>%
         do.call(rbind, .) %>% 
         unique %>%
-        filter(snp1 != snp2) %>%
+        filter(snp1 != snp2)
+    imp <- importance(rf)
+    top_snps <- tail(sort(imp), n = floor(length(imp) * 0.2)) %>% names
+    snps %>%
+         filter(snp1 %in% top_snps | snp2 %in% top_snps) %>%
         write_tsv('snp_pairs.tsv')
     """
 
