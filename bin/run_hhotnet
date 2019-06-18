@@ -147,8 +147,8 @@ process process_hierarchies {
         file '*' from h_edges.collect()
 
     output:
-        file 'clusters.tsv' into clusters
-        file 'sizes.pdf'
+        file 'selected_genes.hotnet.txt'
+        file 'cluster_sizes.hotnet.pdf'
 
     """
     python ${HHNET}/process_hierarchies.py \
