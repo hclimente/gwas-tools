@@ -6,6 +6,8 @@ params.gencode = 28
 params.genome = 'GRCh38'
 params.vegas_params = '-upper 50000 -lower 50000'
 params.covar = ''
+params.snp_association = ''
+params.ld_controls = ''
 
 //////////////////////////////////////////////
 ///RUN VEGAS         ///
