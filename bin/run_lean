@@ -34,7 +34,7 @@ process read_vegas {
 
     vegas_out <- read_tsv('$VEGAS_OUT')
 
-    scores <- vegas_out[['Top-0.1-pvalue']]
+    scores <- vegas_out[['Pvalue']]
     names(scores) <- vegas_out[['Gene']]
 
     save(scores, file = 'scores.RData')

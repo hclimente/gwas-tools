@@ -17,7 +17,7 @@ rename(Interactor_A = `Official Symbol Interactor A`,
 
 # read vegas output
 scores <- read_tsv('${VEGAS_OUT}') %>% 
-    rename(gene = Gene, p = `Top-0.1-pvalue`) %>%
+    rename(gene = Gene, p = Pvalue) %>%
     select(gene, p) %>%
     as.data.frame
 
