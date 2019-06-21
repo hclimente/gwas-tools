@@ -36,7 +36,7 @@ process run_dmGWAS {
     modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, r = 0.1)
     top <- simpleChoose(modules)
 
-    data_frame(gene = names(V(top$subnetwork))) %>%
+    data_frame(gene = names(V(top\$subnetwork))) %>%
         write_tsv('selected_genes.dmgwas.tsv')
     """
 

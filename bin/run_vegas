@@ -6,10 +6,8 @@ params.gencode = 28
 params.genome = 'GRCh38'
 params.vegas_params = '-upper 50000 -lower 50000'
 params.covar = ''
-
-bed = file("${params.bfile}.bed")
-bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
-fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+params.snp_association = ''
+params.ld_controls = ''
 
 //////////////////////////////////////////////
 ///RUN VEGAS         ///
@@ -83,6 +81,11 @@ process convert_glist_to_hgnc {
 ///          SNP ASSOCIATION TEST          ///
 //////////////////////////////////////////////
 if (params.snp_association == ''){
+
+  bed = file("${params.bfile}.bed")
+  bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
+  fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+
   if (params.covar == '') {
 
       process compute_chisq {
@@ -133,7 +136,7 @@ if (params.snp_association == ''){
 //////////////////////////////////////////////
 ///         EXTRACT CONTROLS FOR LD        ///
 //////////////////////////////////////////////
-if (params.ld_controls = '') {
+if (params.ld_controls == '') {
   process extract_controls {
 
       input:

@@ -46,7 +46,7 @@ process grow_forest {
     gwas <- as_tibble(X) %>%
         mutate(phenotype = Y)
 
-    rf <- ranger(phenotype ~ ., data = gwas, importance = 'impurity')
+    rf <- ranger(dependent.variable.name = 'phenotype', data = gwas, importance = 'impurity')
     save(rf, file = 'forest.RData')
 
     snps <- lapply(seq(1, 500), function(i) {
@@ -72,7 +72,7 @@ process grow_forest {
 
 }
 
-pairs. splitText( keepHeader: true, by: 100, file: true ). set{ pairs_split }
+pairs. splitText( keepHeader: true, by: 10000, file: true ). set{ pairs_split }
 
 process permute {
 
@@ -96,6 +96,7 @@ process permute {
 
     X <- as(gwas\$genotypes, "numeric")
     X[is.na(X)] <- 0 # safeguard against missing genotypes
+    X <- as.tibble(X)
     Y <- gwas\$fam\$affected
 
     pairs <- read_tsv('${PAIRS}')
@@ -106,8 +107,7 @@ process permute {
         snp2 <- as.character(pairs[i,2])
 
         # preserve main effects
-        gwas <- as_tibble(X) %>%
-            mutate(phenotype = Y) %>%
+        gwas <- mutate(X, phenotype = Y) %>%
             split(., .\$phenotype) %>%
             lapply(function(df){
                 df[,snp1] <- df[sample(1:nrow(df)), snp1]
@@ -122,8 +122,7 @@ process permute {
         w_main <- tibble(snp1 = snp1, snp2 = snp2, i = ${I}, mse = mse, preserved = 'main')
 
         # preserve main effect and interaction
-        gwas <- as_tibble(X) %>%
-            mutate(phenotype = Y) %>%
+        gwas <- mutate(X, phenotype = Y) %>%
             split(., .\$phenotype) %>%
             lapply(function(df){
                 perm <- sample(1:nrow(df))
