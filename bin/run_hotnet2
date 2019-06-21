@@ -1,0 +1,98 @@
+#!/usr/bin/env nextflow
+
+params.out = "."
+
+tab2 = file(params.tab2)
+vegas = file(params.scores)
+hotnet2_path = file(params.hotnet2_path)
+
+network_permutations = 100
+heat_permutations = 1000
+
+process make_network {
+
+    input:
+        file TAB2 from tab2
+
+    output:
+        file 'node_index.tsv' into node_index
+        file 'edge_list.tsv' into edge_list
+
+    script:
+    template 'io/tab2_2hotnet.R'
+
+}
+
+process vegas2hotnet {
+
+    input:
+        file VEGAS from vegas
+
+    output:
+        file 'scores.ht' into scores
+
+    script:
+    template 'io/vegas2hotnet.R'
+
+}
+
+process make_h5_network {
+
+    input:
+        file HOTNET2 from hotnet2_path
+        file NODE_IDX from node_index
+        file EDGE_LIST from edge_list
+
+    output:
+        file 'network.h5' into h5
+
+    """
+    python2 ${HOTNET2}/makeNetworkFiles.py \
+-e ${EDGE_LIST} \
+-i ${NODE_IDX} \
+-nn ppin \
+-p  ppin \
+-b  0.4 \
+-np  ${network_permutations} \
+-o  network.h5
+    """
+
+}
+
+process make_heat_data {
+
+    input:
+        file HOTNET2 from hotnet2_path
+        file SCORES from scores
+
+    output:
+        file 'scores.json' into heat
+
+    """
+    python2 ${HOTNET2}/makeHeatFile.py \
+scores \
+-hf ${SCORES} \
+-o scores.json \
+-n scores
+    """
+
+}
+/*
+process hotnet2 {
+
+    input:
+        file HEAT from heat
+        file NETWORK from h5
+
+    """
+    python2 ${HOTNET2}/HotNet2.py \
+-nf ${NETWORK} \ 
+-pnp data/networks/hint+hi2012/permuted/hint+hi2012_ppr_0.4_##NUM##.h5 \
+-hf ${HEAT} \ 
+-np  ${network_permutations} \
+-hp  ${heat_permutations} \
+-o   results
+    """
+
+}
+*/
