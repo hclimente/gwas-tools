@@ -1,0 +1,4 @@
+* TODO permuted RF
+** TODO Use only variables with main effects
+** TODO Use only interactions that appear in multiple trees
+** TODO Interactions must come only from pairs of SNPs that share a branch
