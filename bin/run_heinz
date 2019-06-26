@@ -41,10 +41,14 @@ process heinz {
     fb <- fitBumModel(pvals, plot = FALSE)
     scores <- scoreNodes(net, fb, fdr = ${FDR})
 
-    selected <- runFastHeinz(net, scores)
+    if (sum(scores > 0)) {
+	selected <- runFastHeinz(net, scores)
     
-    tibble(gene = names(V(selected))) %>% 
-        write_tsv('selected_genes.heinz.txt')
+    	tibble(gene = names(V(selected))) %>% 
+            write_tsv('selected_genes.heinz.txt')
+    } else {
+        write_tsv(tibble(gene = character()), 'selected_genes.heinz.txt')
+    }
     """
 
 }
