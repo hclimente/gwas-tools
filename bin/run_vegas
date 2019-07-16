@@ -167,8 +167,6 @@ if (params.ld_controls == '') {
 //////////////////////////////////////////////
 process run_vegas {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
-
     input:
         file BED from bed_controls
         file bim_controls
@@ -178,12 +176,33 @@ process run_vegas {
         val VEGAS_PARAMS from params.vegas_params
 
     output:
-        file 'scored_genes.vegas.txt'
+        file 'scored_genes.vegas.duplicates.txt' into vegas_out
 
     """
     vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes ${VEGAS_PARAMS}
     sed 's/"//g' scored_genes.out | sed 's/ /\\t/g' >tmp
-    mv tmp scored_genes.vegas.txt
+    mv tmp scored_genes.vegas.duplicates.txt
+    """
+
+}
+
+process fix_vegas_output {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file VEGAS from vegas_out
+
+    output:
+        file 'scored_genes.vegas.txt'
+
+    """
+    #!/usr/bin/env Rscript
+    library(tidyverse)
+
+    read_tsv('$VEGAS', col_types = 'iciddddddcd') %>%
+        filter(!duplicated(Gene)) %>%
+        write_tsv('scored_genes.vegas.txt')
     """
 
 }
