@@ -8,6 +8,7 @@ hotnet2_path = file(params.hotnet2_path)
 
 network_permutations = 100
 heat_permutations = 1000
+beta = 0.4
 
 process make_network {
 
@@ -42,19 +43,21 @@ process make_h5_network {
         file HOTNET2 from hotnet2_path
         file NODE_IDX from node_index
         file EDGE_LIST from edge_list
+        val BETA from beta
 
     output:
-        file 'network.h5' into h5
+        file "ppin_ppr_${BETA}.h5" into h5
+        file 'permuted' into permutations
 
     """
     python2 ${HOTNET2}/makeNetworkFiles.py \
--e ${EDGE_LIST} \
--i ${NODE_IDX} \
--nn ppin \
--p  ppin \
--b  0.4 \
--np  ${network_permutations} \
--o  network.h5
+--edgelist_file ${EDGE_LIST} \
+--gene_index_file ${NODE_IDX} \
+--network_name ppin \
+--prefix ppin \
+--beta ${BETA} \
+--num_permutations ${network_permutations} \
+--output_dir .
     """
 
 }
@@ -66,33 +69,41 @@ process make_heat_data {
         file SCORES from scores
 
     output:
-        file 'scores.json' into heat
+        file 'heat.json' into heat
 
     """
     python2 ${HOTNET2}/makeHeatFile.py \
 scores \
--hf ${SCORES} \
--o scores.json \
--n scores
+-heat_file ${SCORES} \
+--output_file heat.json
     """
 
 }
-/*
+
 process hotnet2 {
 
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
     input:
+        file HOTNET2 from hotnet2_path
         file HEAT from heat
         file NETWORK from h5
+        file PERMS from permutations
+        val BETA from beta
+
+    output:
+        file 'selected_genes.hotnet2.txt'
 
     """
     python2 ${HOTNET2}/HotNet2.py \
--nf ${NETWORK} \ 
--pnp data/networks/hint+hi2012/permuted/hint+hi2012_ppr_0.4_##NUM##.h5 \
--hf ${HEAT} \ 
--np  ${network_permutations} \
--hp  ${heat_permutations} \
--o   results
+--network_files ${NETWORK} \
+--permuted_networks_path ${PERMS}/ppin_ppr_${BETA}_##NUM##.h5 \
+--heat_file ${HEAT} \
+--network_permutations ${network_permutations} \
+--heat_permutations ${heat_permutations} \
+--output_directory .
+
+    cp consensus/subnetworks.tsv selected_genes.hotnet2.txt
     """
 
 }
-*/
