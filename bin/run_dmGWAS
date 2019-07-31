@@ -15,7 +15,7 @@ process run_dmGWAS {
         file TAB2
 
     output:
-        file 'selected_genes.dmgwas.tsv'
+        file 'selected_genes.dmgwas.txt'
 
     """
     #!/usr/bin/env Rscript
@@ -33,11 +33,11 @@ process run_dmGWAS {
                interactorB = `Official Symbol Interactor B`) %>%
         select(interactorA, interactorB)
 
-    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, r = 0.1)
+    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, r = 0.1, d = 2)
     top <- simpleChoose(modules)
 
     tibble(gene = names(V(top\$subnetwork))) %>%
-        write_tsv('selected_genes.dmgwas.tsv')
+        write_tsv('selected_genes.dmgwas.txt')
     """
 
 }
