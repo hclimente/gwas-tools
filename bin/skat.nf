@@ -38,22 +38,27 @@ process get_null {
     file 'null.RData' into dnull
 
     """
-#!/usr/bin/env Rscript 
+    #!/usr/bin/env Rscript 
 
-library(SKAT)
+    library(SKAT)
 
-load('${RGWAS}')
+    load('${RGWAS}')
 
+    y <- gwas\$fam\$affected
 
-y <- gwas['fam']['affected']
-dnull <- SKAT_Null_Model(y ~ ., out_type="${PHENO}")
+    if ("${PHENO}" == 'D')
+        y <- y - 1
 
-save(dnull, 'null.RData')
-"""
+    dnull <- SKAT_Null_Model(y ~ 1, out_type="${PHENO}")
+
+    save(dnull, file = 'null.RData')
+    """
 
 }
 
 process skat {
+
+    publishDir "$params.out", overwrite: true, mode: "move"
 
     input:
     file RGWAS from rgwas
@@ -61,31 +66,33 @@ process skat {
     file SNP2GENE from snp2gene
 
     output:
-    file 'scored_genes.skat.tsv' into gene_scores
+    file 'scored_genes.skat.tsv'
 
     """
-#!/usr/bin/env Rscript 
+    #!/usr/bin/env Rscript 
 
-library(SKAT)
-library(tidyverse)
+    library(SKAT)
+    library(tidyverse)
+    library(snpStats)
 
-load('${RGWAS}')
-load('${DNULL}')
+    load('${RGWAS}')
+    load('${DNULL}')
 
-snp2gene <- read_tsv('$SNP2GENE')
-genes <- snp2gene\$gene %>% unique
+    snp2gene <- read_tsv('$SNP2GENE', col_types = 'cc')
+    genes <- snp2gene\$gene %>% unique
 
-pvals <- lapply(genes, function(g){
+    pvals <- lapply(genes, function(g){
 
-snps <- snp2gene\$snp[ snp2gene\$gene == g]
-Z <- as(gwas['genotypes'], 'numeric')
+        print(g)
+        snps <- snp2gene\$snp[ snp2gene\$gene == g]
+        Z <- as(gwas\$genotypes[,snps], 'numeric')
+        Z <- abs(Z - 2)
+        SKAT(Z, dnull)\$p.value
 
-SKAT(Z, dnull)\$p.value
+    }) %>% do.call(c, .)
 
-}) %>% do.call(c, .)
-
-tibble(gene = genes, p = pvals) %>%
-write_tsv('scored_genes.skat.tsv')
+    tibble(gene = genes, p = pvals) %>%
+        write_tsv('scored_genes.skat.tsv')
     """
 
 }
