@@ -74,7 +74,7 @@ process make_heat_data {
     """
     python2 ${HOTNET2}/makeHeatFile.py \
 scores \
--heat_file ${SCORES} \
+--heat_file ${SCORES} \
 --output_file heat.json
     """
 
@@ -97,8 +97,8 @@ process hotnet2 {
     """
     python2 ${HOTNET2}/HotNet2.py \
 --network_files ${NETWORK} \
---permuted_networks_path ${PERMS}/ppin_ppr_${BETA}_##NUM##.h5 \
---heat_file ${HEAT} \
+--permuted_network_path ${PERMS}/ppin_ppr_${BETA}_##NUM##.h5 \
+--heat_files ${HEAT} \
 --network_permutations ${network_permutations} \
 --heat_permutations ${heat_permutations} \
 --output_directory .
