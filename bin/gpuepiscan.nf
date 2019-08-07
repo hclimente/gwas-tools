@@ -7,7 +7,7 @@ bed = file("${params.bfile}.bed")
 bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
 fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
-process ped2r {
+process bed2r {
 
         input:
           file BED from bed
@@ -22,7 +22,7 @@ process ped2r {
 
 }
 
-process episcan {
+process gpuepiscan {
 
         publishDir "$params.out", overwrite: true, mode: "copy"
 
@@ -30,7 +30,7 @@ process episcan {
           file RGWAS from rgwas
 
         output:
-          file 'scored_interactions.episcan.txt'
+          file 'scored_interactions.episcan.tsv'
 
         script:
         """
@@ -47,13 +47,14 @@ process episcan {
         y <- gwas[['fam']][['affected']] - 1
 
         gpuEpiScan(geno1 = X,
-                pheno = y,
-                phetype = "quantitative",
-                outfile = "scored_interactions.episcan", 
-                suffix = ".txt", 
-                zpthres = 0.9, 
-                chunksize = 20, 
-                scale = TRUE)
+                   pheno = y,
+                   phetype = "quantitative",
+                   outfile = "scored_interactions.episcan", 
+                   suffix = ".txt" 
+                  )
+        
+        system2('sed', args = c("'s/ /\t/g'", 'scored_interactions.episcan.txt'),
+                stdout = 'scored_interactions.episcan.tsv')
         """
 
 }
