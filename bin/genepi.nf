@@ -33,7 +33,7 @@ process make_pheno {
 
     script:
     """
-    cut -d' ' -f6 ${FAM} >pheno.csv
+    cut -d' ' -f6 ${FAM} | tr 21 10 >pheno.csv
     """
 
 }
