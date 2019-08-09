@@ -4,7 +4,7 @@ params.out = '.'
 
 bim = file(params.bim)
 params.gencode_version = 28
-params.grch_version = 'GRCh38'
+params.grch_version = '38'
 params.buffer = 50000
 
 process download_hgnc {
