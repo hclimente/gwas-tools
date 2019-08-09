@@ -31,7 +31,7 @@ process make_glist {
 
     input:
         file gff
-        val BUFF from buffer
+        val BUFF from params.buffer
 
     output:
         file 'glist_ensembl' into glist
@@ -39,7 +39,7 @@ process make_glist {
     """
     awk '\$3 == "gene"' $gff >genes.gff
     gff2bed < genes.gff | cut -f1-4 | sed 's/\\.[^\\t]\\+\$//' | sed 's/^chr//' >tmp
-    awk '{$2 = $2 - ${BUFF}; $3 = $3 + ${BUFF} 1' tmp | awk '$2 < 0 {$2 = 0} 1' >buffered_genes
+    awk '{\$2 = \$2 - ${BUFF}; \$3 = \$3 + ${BUFF}} 1' tmp | awk '\$2 < 0 {\$2 = 0} 1' >buffered_genes
     sed 's/^XY/25/' buffered_genes | sed 's/^X/23/' | sed 's/^Y/24/' | sed 's/^M/26/' | awk '\$1 <= 24' >glist_ensembl
     """
 
