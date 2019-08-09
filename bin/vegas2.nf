@@ -3,25 +3,16 @@
 params.out = '.'
 
 params.gencode = 28
-params.genome = 'GRCh38'
-params.vegas_params = '-upper 50000 -lower 50000'
+params.genome = '38'
+params.vegas_params = ''
 params.covar = ''
 params.snp_association = ''
 params.ld_controls = ''
+params.buffer = 0
 
 //////////////////////////////////////////////
 ///RUN VEGAS         ///
 //////////////////////////////////////////////
-process download_hgnc {
-
-    output:
-        file 'non_alt_loci_set.txt' into hgnc
-
-    script:
-    template 'dbs/hgnc.sh'
-    
-}
-
 process download_gencode {
 
     input:
@@ -36,43 +27,20 @@ process download_gencode {
 
 }
 
-process create_ensembl_glist {
+process make_glist {
 
     input:
         file gff
+        val BUFF from buffer
 
     output:
-        file 'glist_ensembl' into glist_ensembl
+        file 'glist_ensembl' into glist
 
     """
     awk '\$3 == "gene"' $gff >genes.gff
     gff2bed < genes.gff | cut -f1-4 | sed 's/\\.[^\\t]\\+\$//' | sed 's/^chr//' >tmp
-    sed 's/^XY/25/' tmp | sed 's/^X/23/' | sed 's/^Y/24/' | sed 's/^M/26/' | awk '\$1 <= 24' >glist_ensembl
-    """
-
-}
-
-process convert_glist_to_hgnc {
-
-    input:
-        file glist_ensembl
-        file hgnc
-
-    output:
-        file 'glist_hgnc' into glist_hgnc
-
-    """
-    #!/usr/bin/env Rscript
-    library(tidyverse)
-	
-    ensembl2hgnc <- read_tsv('$hgnc') %>%
-		select(symbol, ensembl_gene_id)
-
-    read_tsv('$glist_ensembl', col_names=F, col_types = 'ciic') %>% 
-        filter(!is.na(X1)) %>%
-        inner_join(ensembl2hgnc, by = c('X4' = 'ensembl_gene_id')) %>% 
-        select(-X4) %>%
-        write_delim('glist_hgnc', col_names = FALSE)
+    awk '{$2 = $2 - ${BUFF}; $3 = $3 + ${BUFF} 1' tmp | awk '$2 < 0 {$2 = 0} 1' >buffered_genes
+    sed 's/^XY/25/' buffered_genes | sed 's/^X/23/' | sed 's/^Y/24/' | sed 's/^M/26/' | awk '\$1 <= 24' >glist_ensembl
     """
 
 }
@@ -165,14 +133,14 @@ if (params.ld_controls == '') {
 //////////////////////////////////////////////
 ///                RUN VEGAS               ///
 //////////////////////////////////////////////
-process run_vegas {
+process vegas {
 
     input:
         file BED from bed_controls
         file bim_controls
         file fam_controls
         file SNPASSOCIATION from snp_association
-        file GLIST from glist_hgnc
+        file GLIST from glist 
         val VEGAS_PARAMS from params.vegas_params
 
     output:
