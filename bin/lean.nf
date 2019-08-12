@@ -42,7 +42,7 @@ process read_vegas {
 
 }
 
-process run_lean {
+process lean {
 
     publishDir "$params.out", overwrite: true, mode: "copy"
 

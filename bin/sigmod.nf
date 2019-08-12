@@ -8,7 +8,7 @@ SIGMOD_PATH = file(params.sigmod)
 VEGAS_OUT = file(params.vegas)
 TAB2 = file(params.tab2)
 
-process run_sigmod {
+process sigmod {
 
     publishDir "$params.out", overwrite: true, mode: "copy"
 

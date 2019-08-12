@@ -74,7 +74,7 @@ process create_network {
     """
 }
 
-process run_scones {
+process scones {
 
     publishDir "$params.out", overwrite: true, mode: "copy"
 
