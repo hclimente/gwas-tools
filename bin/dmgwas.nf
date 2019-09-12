@@ -6,7 +6,7 @@ params.out = '.'
 VEGAS_OUT = file(params.vegas)
 TAB2 =  file(params.tab2)
 
-process run_dmGWAS {
+process dmgwas {
 
     publishDir "$params.out", overwrite: true, mode: "copy"
 
