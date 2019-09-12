@@ -75,7 +75,8 @@ process make_heat_data {
     python2 ${HOTNET2}/makeHeatFile.py \
 scores \
 --heat_file ${SCORES} \
---output_file heat.json
+--output_file heat.json \
+--name gwas
     """
 
 }
