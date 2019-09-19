@@ -125,8 +125,6 @@ scores \
 
 process hotnet2 {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
-
     input:
         file HOTNET2 from hotnet2_path
         file HEAT from heat
@@ -135,7 +133,7 @@ process hotnet2 {
         val BETA from beta
 
     output:
-        file 'selected_genes.hotnet2.txt'
+        file 'consensus/subnetworks.tsv' into subnetworks
 
     """
     python2 ${HOTNET2}/HotNet2.py \
@@ -145,8 +143,31 @@ process hotnet2 {
 --network_permutations ${network_permutations} \
 --heat_permutations ${heat_permutations} \
 --output_directory .
+    """
 
-    cp consensus/subnetworks.tsv selected_genes.hotnet2.txt
+}
+
+process process_output {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file SUBNETWORKS from subnetworks
+
+    output:
+        file 'selected_genes.hotnet2.txt'
+
+    """
+#!/usr/bin/env Rscript
+
+library(tidyverse)
+
+read_tsv('${SUBNETWORKS}, col_types = 'cc', comment = '#', col_names = F) %>%
+    select(X1) %>%
+    mutate(cluster = 1:n()) %>%
+    separate_rows(X1, sep = ' ') %>%
+    rename(gene = X1) %>%
+    write_tsv('selected_genes.hotnet2.txt')
     """
 
 }
