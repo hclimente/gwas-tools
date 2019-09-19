@@ -49,20 +49,18 @@ theme_set(theme_cowplot())
 scores <- read_tsv('${SCORES}')
 
 lfdr <- twilight(scores\$Pvalue, B=1000)
-
-
 lfdr <- tibble(Gene = scores\$Gene[as.numeric(rownames(lfdr\$result))],
                vegas_p = scores\$Pvalue[as.numeric(rownames(lfdr\$result))],
                lfdr = lfdr\$result\$fdr)
 
-ggplot(lfdr, aes(x = Pvalue, y = 1 - lfdr)) +
+ggplot(lfdr, aes(x = vegas_p, y = 1 - lfdr)) +
     geom_line() +
     geom_vline(xintercept = ${CUTOFF}, color = 'red') +
     labs(x = 'P-value', y = '1 - lFDR')
 ggsave('lfdr_plot.pdf', width=7, height=6)
 
 lfdr %>%
-    mutate(Pvalue = ifelse(vegas_p < ${CUTOFF}, 1, vegas_p)) %>%
+    mutate(Pvalue = ifelse(vegas_p < ${CUTOFF}, vegas_p, 1)) %>%
     write_tsv('scored_genes.sparse.txt')
     """
 
@@ -71,7 +69,7 @@ lfdr %>%
 process vegas2hotnet {
 
     input:
-        file VEGAS from vegas
+        file VEGAS from sparse_scores 
 
     output:
         file 'scores.ht' into scores
