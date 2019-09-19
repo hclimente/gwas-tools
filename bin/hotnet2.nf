@@ -155,19 +155,19 @@ process process_output {
         file SUBNETWORKS from subnetworks
 
     output:
-        file 'selected_genes.hotnet2.txt'
+        file 'selected_genes.hotnet2.tsv'
 
     """
 #!/usr/bin/env Rscript
 
 library(tidyverse)
 
-read_tsv('${SUBNETWORKS}, col_types = 'cc', comment = '#', col_names = F) %>%
+read_tsv('${SUBNETWORKS}', col_types = 'cc', comment = '#', col_names = F) %>%
     select(X1) %>%
     mutate(cluster = 1:n()) %>%
     separate_rows(X1, sep = ' ') %>%
     rename(gene = X1) %>%
-    write_tsv('selected_genes.hotnet2.txt')
+    write_tsv('selected_genes.hotnet2.tsv')
     """
 
 }
