@@ -11,7 +11,7 @@ params.ld_controls = ''
 params.buffer = 0
 
 //////////////////////////////////////////////
-///RUN VEGAS         ///
+///            CREATE GENE LIST            ///
 //////////////////////////////////////////////
 process download_gencode {
 

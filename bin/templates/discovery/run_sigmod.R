@@ -22,7 +22,7 @@ scores <- read_tsv('${VEGAS_OUT}') %>%
     as.data.frame
 
 #my_genes_to_exclude <- vegas[which((vegas\$nSNPs <5) & (vegas\$Pvalue > 0.05)),2]
-
+# check weight_index = NULL
 scored_net <- construct_scored_net(net, interaction_indices = c(1,2), gene_ps = scores)
 res_info <- SigMod_bisection(net = scored_net)
 
