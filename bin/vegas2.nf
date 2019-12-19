@@ -34,7 +34,7 @@ process make_glist {
         val BUFF from params.buffer
 
     output:
-        file 'glist_ensembl' into glist
+        file 'glist_ensembl' into glist_vegas, glist_chrs
 
     """
     awk '\$3 == "gene"' $gff >genes.gff
@@ -44,6 +44,11 @@ process make_glist {
     """
 
 }
+
+chrs = glist_chrs
+  .splitCsv(header: false, sep: ' ')
+	.map { row -> row[0] }
+	.unique()
 
 //////////////////////////////////////////////
 ///          SNP ASSOCIATION TEST          ///
@@ -135,19 +140,22 @@ if (params.ld_controls == '') {
 //////////////////////////////////////////////
 process vegas {
 
+    tag { "Chr ${CHR}" }
+
     input:
         file BED from bed_controls
         file bim_controls
         file fam_controls
         file SNPASSOCIATION from snp_association
-        file GLIST from glist 
+        file GLIST from glist_vegas
         val VEGAS_PARAMS from params.vegas_params
+        each CHR from chromosomes
 
     output:
         file 'scored_genes.vegas.duplicates.txt' into vegas_out
 
     """
-    vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes ${VEGAS_PARAMS}
+    vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes -chr $CHR ${VEGAS_PARAMS}
     sed 's/"//g' scored_genes.out | sed 's/ /\\t/g' >tmp
     mv tmp scored_genes.vegas.duplicates.txt
     """
