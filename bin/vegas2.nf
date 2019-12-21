@@ -45,10 +45,10 @@ process make_glist {
 
 }
 
-chrs = glist_chrs
-  .splitCsv(header: false, sep: ' ')
-	.map { row -> row[0] }
-	.unique()
+chromosomes = glist_chrs
+    .splitCsv(header: false, sep: ' ')
+    .map { row -> row[0] }
+    .unique()
 
 //////////////////////////////////////////////
 ///          SNP ASSOCIATION TEST          ///
@@ -152,33 +152,29 @@ process vegas {
         each CHR from chromosomes
 
     output:
-        file 'scored_genes.vegas.duplicates.txt' into vegas_out
+        file 'scored_genes.vegas.txt' into vegas_out
 
     """
     vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes -chr $CHR ${VEGAS_PARAMS}
     sed 's/"//g' scored_genes.out | sed 's/ /\\t/g' >tmp
-    mv tmp scored_genes.vegas.duplicates.txt
+    R -e 'library(tidyverse); read_tsv("tmp", col_types = "iciddddddcd") %>% filter(!duplicated(Gene)) %>% write_tsv("scored_genes.vegas.txt")'
     """
 
 }
 
-process fix_vegas_output {
+process merge_chromosomes {
 
     publishDir "$params.out", overwrite: true, mode: "copy"
 
     input:
-        file VEGAS from vegas_out
+        file 'scored_genes_chr*' from vegas_out.collect()
 
     output:
         file 'scored_genes.vegas.txt'
 
     """
-    #!/usr/bin/env Rscript
-    library(tidyverse)
-
-    read_tsv('$VEGAS', col_types = 'iciddddddcd') %>%
-        filter(!duplicated(Gene)) %>%
-        write_tsv('scored_genes.vegas.txt')
+    head -n1 scored_genes_chr1 >scored_genes.vegas.txt
+    tail -n +2 -q scored_genes_chr* | sort -n >>scored_genes.vegas.txt
     """
 
 }
