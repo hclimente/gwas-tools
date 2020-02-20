@@ -61,7 +61,7 @@ process create_network {
         if (netType == "gm") {
             net <- get_GM_network(gwas, snpMapping = snp2gene)
         } else if (netType == "gi") {
-            tab2 <- read_tsv("${TAB2}") %>%
+            tab2 <- read_tsv("${TAB2}", col_types = cols(.default = col_character())) %>%
                 rename(gene1 = `Official Symbol Interactor A`, gene2 = `Official Symbol Interactor B`) %>%
                 select(gene1, gene2)
             net <- get_GI_network(gwas, snpMapping = snp2gene, ppi = tab2)

@@ -4,6 +4,6 @@
 mv ${FAM} fam
 
 cut -f1-5 -d' ' fam >ids
-cut -f${I + 2} ${PHENO} >pheno
+cut -f${I + 2} ${PHENO} >phenotypes
 
-paste ids pheno >${FAM}
+paste ids phenotypes >${FAM}

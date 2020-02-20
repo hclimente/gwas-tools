@@ -27,7 +27,7 @@ process preprocess_data {
 
 	"""
 	# TODO DOUBLE CHECK create SNP pairs
-	R -e 'library(tidyverse); snp2gene <- read_tsv("${SNP2GENE}", col_types = "cc"); read_tsv("${TAB2}") %>% inner_join(snp2gene, by = c("Gene_A" = "gene")) %>% inner_join(snp2gene, by = c("Gene_B" = "gene"), suffix = c("_1", "_2")) %>% select(snp_1, snp_2) %>% write_tsv("studied_snp_pairs.tsv")'
+	R -e 'library(tidyverse); snp2gene <- read_tsv("${SNP2GENE}", col_types = "cc"); read_tsv("${TAB2}", col_types = cols(.default = col_character())) %>% inner_join(snp2gene, by = c("Official Symbol Interactor A" = "gene")) %>% inner_join(snp2gene, by = c("Official Symbol Interactor B" = "gene"), suffix = c("_1", "_2")) %>% select(snp_1, snp_2) %>% write_tsv("studied_snp_pairs.tsv")'
 
 	# QC + keep only SNPs in models
 	cut -f1 studied_snp_pairs.tsv >tmp
@@ -40,11 +40,10 @@ process preprocess_data {
 	plink -bfile filtered -extract snps_75.prune.in -make-bed -out post_qc
 
 	# create pheno file
-	cut -d' ' -f6 ${FAM} >pheno
-	cp pheno orig
+	cut -d' ' -f6 ${FAM} >orig
+	cut -d' ' -f1,2,6 ${FAM} | sed 's/ /\t/g'  >pheno
 	for i in {1..${I}}
 	do
-		# TODO check the column order is kept
 		shuf orig >tmp1
 		paste pheno tmp1 >tmp2
 		mv tmp2 pheno
@@ -56,7 +55,7 @@ process preprocess_data {
 process snp_epistasis {
 	
 	input:
-        each I from 0..params.nperm
+        each I from 1..(params.nperm + 1)
 	set file(BED), file(BIM), file(FAM), file(PHENO) from filtered_bed 
 
 	output:
@@ -69,7 +68,7 @@ process snp_epistasis {
 }
 
 snp_pairs_null
-	.filter { it -> it[0] != 0 }
+	.filter { it -> it[0] != 1 }
 	.flatMap { it -> it[1] }
 	.set { snp_pairs_null_filtered }
 
@@ -83,7 +82,7 @@ process gene_epistasis {
         file TAB2 from tab2
 
 	output:
-	set val(I), 'scored_gene_pairs.tsv' into scored_gene_pairs
+	set val(I), 'scored_gene_pairs.tsv' into scored_gene_pairs, scored_gene_pairs_null
 
 	"""
 	#!/usr/bin/env Rscript
@@ -111,9 +110,9 @@ process gene_epistasis {
 		inner_join(snp2snp, by = 'uniq_snp_id') %>%
 		select(uniq_snp_id, P)
 
-	read_tsv('${TAB2}', col_types = 'cc') %>%
-		inner_join(snp2gene, by = c('gene1' = 'gene')) %>%
-                inner_join(snp2gene, by = c('gene2' = 'gene')) %>%
+	read_tsv('${TAB2}', col_types = cols(.default = col_character())) %>%
+		inner_join(snp2gene, by = c('Official Symbol Interactor A' = 'gene')) %>%
+                inner_join(snp2gene, by = c('Official Symbol Interactor B' = 'gene')) %>%
                 mutate(uniq_snp_id = cbind(SNP_1, SNP_2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_'),
 		       uniq_gene_id = cbind(gene_1, gene_2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_')) %>%
 		inner_join(snp_pairs, by = 'uniq_snp_id') %>%
@@ -122,6 +121,40 @@ process gene_epistasis {
 			  tau_0.01 = prod(P[P < 0.01]),
 			  tau_0.001 = prod(P[P < 0.001])) %>%
 		write_tsv('scored_gene_pairs.tsv')
+	"""
+
+}
+
+// TODO create two subsets
+scored_gene_pairs
+        .filter { it -> it[0] == 1 }
+        .flatMap { it -> it[1] }
+        .set { gene_pairs }
+scored_gene_pairs_null
+        .filter { it -> it[0] != 1 }
+        .flatMap { it -> it[1] }
+        .set { gene_pairs_null }
+
+process involved_pathways {
+
+	input:
+	file 'null_*' from gene_pairs_null .collect()
+	file GENE_PAIRS from gene_pairs
+	file TAB2 from tab2
+
+	output:
+	file 'scored_gene_pairs.tsv'
+	file 'scored_pathways.tsv'
+
+	"""
+        #!/usr/bin/env Rscript
+
+	library(tidyverse)
+	library(igraph)
+
+        net <- read_tsv('${TAB2}', col_types = cols(.default = col_character())) %>%
+                select(`Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
+		graph_from_data_frame
 	"""
 
 }
