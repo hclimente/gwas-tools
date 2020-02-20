@@ -73,10 +73,15 @@ snp2gene.nf --bim test/data/example.map --genome GRCh38 -with-docker hclimente/g
 | liftOver     | No       | [Copyright](http://hgdownload.soe.ucsc.edu/admin/exe/)
 | [MB-MDR](http://bio3.giga.ulg.ac.be/index.php/software/mb-mdr/) | No       | ?
 | [PLINK 1.90](https://www.cog-genomics.org/plink/1.9) | Yes      | [GPLv3](https://www.cog-genomics.org/plink/1.9/general_usage)
+| R::biglasso  | Yes      | [GPLv3](https://cran.r-project.org/web/packages/biglasso/)
+| R::bigmemory | Yes      | [LGPLv3](https://cran.r-project.org/web/packages/bigmemory/)
 | R::BioNet    | Yes      | [GPLv2](https://bioconductor.org/packages/release/bioc/html/BioNet.html)
 | R::dmGWASv3  | Yes      | [GPLv2](https://bioinfo.uth.edu/dmGWAS/dmGWAS_3.0-manual.pdf)
+| R::igraph    | Yes      | [GPLv3](https://cran.r-project.org/web/packages/igraph/)
 | R::LEANR     | Yes      | [GPLv3](https://cran.r-project.org/web/packages/LEANR/)
 | R::martini   | Yes      | [MIT](https://bioconductor.org/packages/release/bioc/html/martini.html)
 | R::ranger    | Yes      | [GPLv3](https://cran.r-project.org/web/packages/ranger/)
 | R::SigModv2  | No       | ?
+| R::SKAT      | Yes      | [GPLv3](https://cran.r-project.org/web/packages/SKAT/)
+| R::snpStats  | Yes      | [GPLv3](http://bioconductor.org/packages/release/bioc/html/snpStats.html)
 | [VEGAS2v02](https://vegas2.qimrberghofer.edu.au/) | No       | ?
