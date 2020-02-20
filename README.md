@@ -54,3 +54,25 @@ run_vegas --bfile test/data/example -with-docker hclimente/gwas-tools
 ```
 snp2gene --bim test/data/example.map --genome GRCh38 -with-docker hclimente/gwas-tools
 ```
+
+# Dependencies
+
+| Tool         | Docker'd | License   | Source                                                                          
+| -------------|:---------|:----------|:--------------------
+| AntEpiSeeker | No       | ?         |
+| BEAM         | No       | ?         |
+| BEDOPS       | Yes      | GPLv2     | [LICENSE](https://github.com/bedops/bedops/blob/master/LICENSE)
+| Biofilter    | No       | ?
+| GTOOL        | No       | Copyright | Downloaded license file
+| HotNet2      | No       | Copyright | [LICENSE](https://github.com/raphael-group/hotnet2/blob/master/LICENSE)
+| IMPUTE       | No       | Copyright | Downloaded license file
+| liftOver     | No       | Copyright | [link](http://hgdownload.soe.ucsc.edu/admin/exe/)
+| MB-MDR       | No       | ?
+| PLINK 1.90   | Yes      | GPLv3     | [link](https://www.cog-genomics.org/plink/1.9/general_usage)
+| R::BioNet    | Yes      | GPLv2     | [Bioconductor](https://bioconductor.org/packages/release/bioc/html/BioNet.html)
+| R::dmGWASv3  | Yes      | GPLv2     | [link](https://bioinfo.uth.edu/dmGWAS/dmGWAS_3.0-manual.pdf)
+| R::LEANR     | Yes      | GPLv3     | [CRAN](https://cran.r-project.org/web/packages/LEANR/)
+| R::martini   | Yes      | MIT       | [Bioconductor](https://bioconductor.org/packages/release/bioc/html/martini.html)
+| R::ranger    | Yes      | GPLv3     | [CRAN](https://cran.r-project.org/web/packages/ranger/)
+| R::SigModv2  | No       | ?
+| VEGAS2v02    | No       | ?
