@@ -13,38 +13,52 @@ tab2 = file("${params.tab2}")
 snp2gene = file("${params.snp2gene}")
 excluded_snps = file("${params.excluded}")
 
+process make_snp_models {
+
+	input:
+		file TAB2 from tab2 
+		file SNP2GENE from snp2gene
+
+	output:
+		file 'snp2snp.tsv' into snp2snp_1, snp2snp_2, snp2snp_3
+
+	"""
+	#!/usr/bin/env Rscript
+
+	library(tidyverse)
+	library(data.table)
+
+	snp2gene <- read_tsv("${SNP2GENE}", col_types = "cc")
+	read_tsv("${TAB2}", col_types = cols(.default = col_character())) %>%
+		rename(gene_1 = "Official Symbol Interactor A", gene_2 = "Official Symbol Interactor B") %>%
+		select(gene_1, gene_2) %>%
+		data.table %>%
+		merge(snp2gene, by.x = 'gene_1', by.y = 'gene', allow.cartesian = TRUE) %>%
+		merge(snp2gene, by.x = 'gene_2', by.y = 'gene', allow.cartesian = TRUE, suffix = c('_1', '_2')) %>%
+		mutate(uniq_snp_id = cbind(snp_1, snp_2) %>% apply(1, sort) %>% apply(2, paste, collapse = "_"),
+			   uniq_gene_id = cbind(gene_1, gene_2) %>% apply(1, sort) %>% apply(2, paste, collapse = "_")) %>%
+		write_tsv("snp2snp.tsv")
+	"""
+
+}
+
 process preprocess_data {
 
 	input:
 		file BED from bed
 		file bim
 		file FAM from fam
-		file TAB2 from tab2 
-		file SNP2GENE from snp2gene
+		file SNP2SNP from snp2snp_1 
 		file EXCLUDED from excluded_snps
 		val I from params.nperm
 
 	output:
 		set 'post_qc.bed', 'post_qc.bim', 'post_qc.fam', 'pheno' into filtered_bed
-		file 'studied_snp_pairs.tsv' into studied_snp_pairs_1, studied_snp_pairs_2
 
 	"""
-	# create SNP pairs
-	R -e '
-	library(tidyverse);
-	snp2gene <- read_tsv("${SNP2GENE}", col_types = "cc"); 
-	read_tsv("${TAB2}", col_types = cols(.default = col_character())) %>%
-	rename(gene_1 = "Official Symbol Interactor A", gene_2 = "Official Symbol Interactor B") %>% 
-	inner_join(snp2gene, by = c(gene_1 = "gene")) %>% 
-	inner_join(snp2gene, by = c("gene_2" = "gene"), suffix = c("_1", "_2")) %>% 
-	mutate(uniq_snp_id = cbind(snp_1, snp_2) %>% apply(1, sort) %>% apply(2, paste, collapse = "_"),
-	uniq_gene_id = cbind(gene_1, gene_2) %>% apply(1, sort) %>% apply(2, paste, collapse = "_")) %>%
-	write_tsv("studied_snp_pairs.tsv")
-	'
-
 	# QC + keep only SNPs in models + remove excluded SNPs
-	cut -f3 studied_snp_pairs.tsv >tmp
-	cut -f4 studied_snp_pairs.tsv >>tmp
+	cut -f3 ${SNP2SNP} >tmp
+	cut -f4 ${SNP2SNP} >>tmp
 	sort tmp | uniq >snps_in_models
 	comm -3 snps_in_models <(sort ${EXCLUDED}) >included_snps
 	plink -bfile ${BED.baseName} -extract included_snps -maf 0.05 -hwe 0.001 -make-bed -out filtered 
@@ -71,7 +85,7 @@ process snp_epistasis {
 	input:
 		each I from 1..(params.nperm + 1)
 		set file(BED), file(BIM), file(FAM), file(PHENO) from filtered_bed
-		file SNP2SNP from studied_snp_pairs_1 
+		file SNP2SNP from snp2snp_2
 
 	output:
 		set val(I), 'scored_interactions.regression.txt' into snp_pairs, snp_pairs_null 
@@ -114,7 +128,7 @@ process gene_epistasis {
 		file 'permuted_association_*' from snp_pairs_null_filtered .collect()
 		set I, file(SNP_PAIRS) from snp_pairs
 		file SNP2GENE from snp2gene
-		file SNP2SNP from studied_snp_pairs_2
+		file SNP2SNP from snp2snp_3 
 		file TAB2 from tab2
 
 	output:
