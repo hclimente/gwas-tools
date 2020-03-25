@@ -91,7 +91,7 @@ process snp_epistasis {
 		set val(I), 'scored_interactions.regression.txt' into snp_pairs, snp_pairs_null 
 
 	"""
-	epistasis_regression.nf --bfile ${BED.baseName} --pheno ${PHENO} --i ${I}
+	epistasis_regression.nf --bfile ${BED.baseName} --pheno ${PHENO} --i ${I} -profile cluster
 
 	# exhaustive LD pruning
 	cut -f1 scored_interactions.regression.txt >tmp
@@ -99,7 +99,7 @@ process snp_epistasis {
 	sort tmp | uniq >included_snps
 
 	plink -bfile ${BED.baseName} -extract included_snps -allow-no-sex -r2
-    sed 's/^ \\+//' plink.ld | sed 's/ \\+/\t/g' | sed 's/\t\$//' >ld.tsv
+	sed 's/^ \\+//' plink.ld | sed 's/ \\+/\t/g' | sed 's/\t\$//' >ld.tsv
 
 	R -e '
 	library(tidyverse); 
@@ -138,13 +138,16 @@ process gene_epistasis {
 	#!/usr/bin/env Rscript
 
 	library(tidyverse)
+        library(data.table)
 
-	snp2snp <- read_tsv('$SNP2SNP', col_types = 'cc')
+	snp2snp <- read_tsv('$SNP2SNP', col_types = 'cccccc') %>%
+		data.table
 	snp2gene <- read_tsv('$SNP2GENE', col_types = 'cc')
 	threshold <- lapply(list.files(pattern = 'permuted_association_'), function(x) {
 			read_tsv(x, col_types = 'ccccddd') %>%
 				mutate(uniq_snp_id = cbind(SNP1, SNP2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_')) %>%
-				inner_join(snp2snp, by = 'uniq_snp_id') %>%
+				data.table %>%
+                		merge(snp2snp, by = 'uniq_snp_id', allow.cartesian = TRUE) %>%
 				arrange(P) %>%
 				top_n(1) %>%
 				select(P)
