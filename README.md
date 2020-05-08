@@ -111,6 +111,7 @@ sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/int
 | [PLINK 1.90](https://www.cog-genomics.org/plink/1.9) | Yes      | [GPLv3](https://www.cog-genomics.org/plink/1.9/general_usage)
 | R::biglasso  | Yes      | [GPLv3](https://cran.r-project.org/web/packages/biglasso/)
 | R::bigmemory | Yes      | [LGPLv3](https://cran.r-project.org/web/packages/bigmemory/)
+| R::CASMAP    | Yes      | [GPLv2](https://cran.r-project.org/web/packages/CASMAP/index.html)
 | R::BioNet    | Yes      | [GPLv2](https://bioconductor.org/packages/release/bioc/html/BioNet.html)
 | R::dmGWASv3  | Yes      | [GPLv2](https://bioinfo.uth.edu/dmGWAS/dmGWAS_3.0-manual.pdf)
 | R::igraph    | Yes      | [GPLv3](https://cran.r-project.org/web/packages/igraph/)
