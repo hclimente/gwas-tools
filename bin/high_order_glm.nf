@@ -47,10 +47,14 @@ process high_order_glm {
     load('${RGWAS}')
 
     X <- as(gwas[['genotypes']], 'numeric')
-    X[is.na(X)] = 0 # change?
+    X[is.na(X)] = 0 # TODO change?
+    X[X == 0] = 'AA'
+    X[X == 1] = 'Aa'
+    X[X == 2] = 'aa'
+
     y <- gwas[['fam']][['affected']] - 1
 
-    intx <- model.matrix(~.^100,data = as.data.frame(X[, snps])) %>%
+    intx <- model.matrix(~.^100, data = as.data.frame(X[, snps])) %>%
         as_tibble %>%
         mutate(y = y)
 
