@@ -1,15 +1,39 @@
 #!/usr/bin/env nextflow
 
 params.out = '.'
+params.pheno = ''
 
 // gwas
 bed = file("${params.bfile}.bed")
 bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
-fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
 // parameters
 params.N = 1000
-params.mode = 'binary'
+params.mode = 'binary' # binary or continuous
+
+if (params.pheno != '') {
+
+    pheno = file(params.pheno)
+    original_fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+
+    process replace_phenotype {
+
+        input:
+            file PHENO from pheno
+            file FAM from original_fam
+            val I from params.i
+
+        output:
+            file "${FAM}" into fam
+
+        script:
+        template 'io/replace_phenotype.sh'
+
+    }
+
+} else {
+    fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+}
 
 process bed2ped {
 
@@ -120,10 +144,11 @@ process merge_permutations {
         val MODE from params.mode
 
     output:
-        file "*_output.txt"
+        file "scored_interactions.mbmdr.txt"
 
     """
     mbmdr --${MODE} --gammastep4 -r 2019 -c perm_ -q ${N} -t ${TOP} ${INPUT}
+    mv *_output.txt scored_interactions.mbmdr.txt
     """
 
 }
