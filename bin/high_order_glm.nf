@@ -50,9 +50,13 @@ process high_order_glm {
     X[is.na(X)] = 0 # change?
     y <- gwas[['fam']][['affected']] - 1
 
+    rm(gwas)
+
     intx <- model.matrix(~.^100,data = as.data.frame(X[, snps])) %>%
         as_tibble %>%
         mutate(y = y)
+
+    rm(X,y)
 
     fit <- glm(y ~ ., data = intx)
     pvals <- coef(summary(fit))[,'Pr(>|t|)']
