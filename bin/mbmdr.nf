@@ -24,7 +24,7 @@ if (params.pheno != '') {
             val I from params.i
 
         output:
-            file "${FAM}" into fam
+            file 'fam' into fam
 
         script:
         template 'io/replace_phenotype.sh'

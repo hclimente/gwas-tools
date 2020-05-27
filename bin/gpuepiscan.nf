@@ -5,7 +5,30 @@ params.out = '.'
 // gwas
 bed = file("${params.bfile}.bed")
 bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
-fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+
+if (params.pheno != '') {
+
+    pheno = file(params.pheno)
+    original_fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+
+    process replace_phenotype {
+
+        input:
+            file PHENO from pheno
+            file FAM from original_fam
+            val I from params.i
+
+        output:
+            file 'fam' into fam
+
+        script:
+        template 'io/replace_phenotype.sh'
+
+    }
+
+} else {
+    fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+}
 
 process bed2r {
 
