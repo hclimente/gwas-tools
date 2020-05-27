@@ -9,7 +9,7 @@ bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
 
 // parameters
 params.N = 1000
-params.mode = 'binary' # binary or continuous
+params.mode = 'binary' // binary or continuous
 
 if (params.pheno != '') {
 
