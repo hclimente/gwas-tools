@@ -6,9 +6,10 @@ params.out = '.'
 bed = file("${params.bfile}.bed")
 bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
 fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+covars = file("${params.covars}")
 
 // tested snps
-snp_set = file("${params.snp_set}")
+interactions = file("${params.interactions}")
 
 process bed2r {
 
@@ -25,16 +26,31 @@ process bed2r {
 
 }
 
-process high_order_glm {
+process make_sets {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
+    input:
+        file INTERACTIONS from interactions
+        val I from 2..interactions.countLines()
+
+    output:
+        file 'snp_set' into snp_sets
+
+    """
+    echo snp >snp_set
+    sed '${I}q;d' ${INTERACTIONS} | sed 's/_/\\n/g' >>snp_set
+    """
+
+}
+
+process high_order_glm {
 
     input:
         file RGWAS from rgwas
-        file SNPS from snp_set
+        file SNPS from snp_sets
+        file COVARS from covars
 
     output:
-        file 'scored_interactions.high_order_glm.tsv'
+        file 'scores.tsv' into scores
 
     script:
     """
@@ -43,6 +59,7 @@ process high_order_glm {
     library(tidyverse)
 
     snps <- read_tsv('${SNPS}')\$snp
+    covars <- read_tsv('${COVARS}')
 
     load('${RGWAS}')
 
@@ -58,16 +75,35 @@ process high_order_glm {
 
     intx <- model.matrix(~.^100,data = as.data.frame(X[, snps])) %>%
         as_tibble %>%
-        mutate(y = y)
+        mutate(y = y) %>%
+        bind_cols(covars)
 
     rm(X,y)
 
     fit <- glm(y ~ ., data = intx)
     pvals <- coef(summary(fit))[,'Pr(>|t|)']
 
-    tibble(snps = names(pvals),
+    tibble(snp_set = paste(snps, collapse = '_'),
+           test = names(pvals),
            p_value = pvals) %>%
-        write_tsv('scored_interactions.high_order_glm.tsv')
+        write_tsv('scores.tsv', col_names = FALSE)
+    """
+
+}
+
+process join_results {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file "*" from scores.collect()
+
+    output:
+        file 'scored_interactions.high_order_glm.tsv'
+
+    """
+    echo "snp_set\ttest\tpvalue" >scored_interactions.high_order_glm.tsv 
+    cat * >>scored_interactions.high_order_glm.tsv
     """
 
 }
