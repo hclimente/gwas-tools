@@ -81,7 +81,9 @@ process preprocess_data {
 }
 
 process snp_epistasis {
-	
+
+	tag { "${I}" }
+
 	input:
 		each I from 1..(params.nperm + 1)
 		set file(BED), file(BIM), file(FAM), file(PHENO) from filtered_bed_pipeline
@@ -130,6 +132,8 @@ snp_pairs_null
 
 process gene_epistasis {
 
+        tag { "${I}" }
+
 	input:
 		file 'permuted_association_*' from snp_pairs_null_filtered .collect()
 		set I, file(SNP_PAIRS) from snp_pairs
@@ -156,12 +160,12 @@ process gene_epistasis {
 				data.table %>%
                 merge(snp2snp, by = 'uniq_snp_id', allow.cartesian = TRUE) %>%
 				arrange(P) %>%
-				top_n(1) %>%
+				head(1) %>%
 				select(P)
 			}) %>%
 		do.call(bind_rows, .) %>%
 		.\$P %>%
-		quantile(.95)
+		quantile(.05)
 
 	snp_pairs <- read_tsv('${SNP_PAIRS}', col_types = 'ccccddd') %>%
 		mutate(uniq_snp_id = cbind(SNP1, SNP2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_')) %>%
@@ -227,7 +231,7 @@ process pathway_epistasis {
 	studied_gene_pairs <- gene_pairs\$uniq_gene_id		
 
 	gene_pairs_assoc <- lapply(list.files(pattern = 'permuted_association_'), function(x) {
-			read_tsv(x) %>%
+			read_tsv(x, col_types = 'cdddc') %>%
 				filter(uniq_gene_id %in% studied_gene_pairs)
 		}) %>%
 		do.call(bind_rows, .) %>%
