@@ -53,7 +53,7 @@ process preprocess_data {
 		val I from params.nperm
 
 	output:
-		set 'post_qc.bed', 'post_qc.bim', 'post_qc.fam', 'pheno' into filtered_bed
+		set 'post_qc.bed', 'post_qc.bim', 'post_qc.fam', 'pheno' into filtered_bed_pipeline, filtered_bed_qc
 
 	"""
 	# QC + keep only SNPs in models + remove excluded SNPs
@@ -84,7 +84,7 @@ process snp_epistasis {
 	
 	input:
 		each I from 1..(params.nperm + 1)
-		set file(BED), file(BIM), file(FAM), file(PHENO) from filtered_bed
+		set file(BED), file(BIM), file(FAM), file(PHENO) from filtered_bed_pipeline
 		file SNP2SNP from snp2snp_2
 
 	output:
@@ -154,7 +154,7 @@ process gene_epistasis {
 			read_tsv(x, col_types = 'ccccddd') %>%
 				mutate(uniq_snp_id = cbind(SNP1, SNP2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_')) %>%
 				data.table %>%
-                		merge(snp2snp, by = 'uniq_snp_id', allow.cartesian = TRUE) %>%
+                merge(snp2snp, by = 'uniq_snp_id', allow.cartesian = TRUE) %>%
 				arrange(P) %>%
 				top_n(1) %>%
 				select(P)
@@ -192,7 +192,7 @@ process gene_epistasis {
 
 }
 
-// TODO create two subsets
+// create two subsets
 scored_gene_pairs
 		.filter { it -> it[0] == 1 }
 		.flatMap { it -> it[1] }
@@ -208,12 +208,10 @@ process pathway_epistasis {
 
 	input:
 		file 'permuted_association_*' from gene_pairs_null .collect()
-		file SIGN_SNP_PAIRS from sign_snp_pairs
 		file GENE_PAIRS from gene_pairs
 		file TAB2 from tab2
 
 	output:
-		file SIGN_SNP_PAIRS
 		file 'sign_gene_pairs.tsv'
 		file 'sign_pathways.tsv'
 
@@ -266,4 +264,54 @@ process pathway_epistasis {
 		write_tsv('sign_pathways.tsv')	
 	"""
 
+}
+
+if (params.prs != '') {
+	process adjust_snp_pairs {
+
+		publishDir "$params.out", overwrite: true, mode: "copy"
+
+		input:
+			file SIGN_SNP_PAIRS from sign_snp_pairs
+			file PRS from params.prs
+			set file(BED), file(BIM), file(FAM), file(PHENO) from filtered_bed_qc
+
+		output:
+			file 'prs_adjusted_sign_snp_pairs.tsv'
+
+		"""
+		#!/usr/bin/env Rscript
+
+		library(tidyverse)
+		library(snpStats)
+
+		snp_pairs <- read_tsv('${SIGN_SNP_PAIRS}', col_types = 'ccd')
+		gwas <- read.plink("${BED}", "${BIM}", "${FAM}")
+		prs <- read_tsv('${PRS}')\$prs
+
+		X <- as(gwas[['genotypes']], 'numeric')
+		X[X == 0] = 'AA'
+		X[X == 1] = 'Aa'
+		X[X == 2] = 'aa'
+		y <- gwas[['fam']][['affected']]
+
+        gwas <- as_tibble(X) %>%
+            mutate(y = y,
+                   prs = prs)
+        rm(X,y)
+
+		mapply(function(snp_1, snp_2) {
+			df <- as.data.frame(df[, c('y', 'prs', snp1, snp2)])
+			colnames(df) <- c('Y', 'PRS', 'SNP1', 'SNP2')
+            PRS_adjusted = lm(Y ~ PRS + SNP1 + SNP2 + SNP1*SNP2, df, na.action=na.exclude)
+            tibble(snp_1 = snp_1,
+                   snp_2 = snp_2,
+                   prs_adjusted_p = summary(PRS_adjusted)\$coefficients[5, 4])
+
+			}, snp_pairs\$snp_1, snp_pairs\$snp_2) %>%
+            bind_rows %>%
+            write_tsv('prs_adjusted_sign_snp_pairs.tsv')
+		"""
+
+	}
 }
