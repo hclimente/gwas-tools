@@ -1,7 +1,7 @@
 FROM r-base
 
 RUN apt-get update \
-    && apt-get install -y wget unzip tar python python-pip python2 sed bedtools libcurl4-gnutls-dev libxml2-dev libssl-dev gawk \
+    && apt-get install -y wget unzip tar python python3-pip python2 sed bedtools libcurl4-gnutls-dev libxml2-dev libssl-dev gawk \
     && rm -rf /var/lib/apt/lists/*
 RUN mkdir /gwas-tools
 ENV PATH="/gwas-tools:${PATH}"
