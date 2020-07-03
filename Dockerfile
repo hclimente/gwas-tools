@@ -7,7 +7,7 @@ RUN mkdir /gwas-tools
 ENV PATH="/gwas-tools:${PATH}"
 WORKDIR /gwas-tools
 RUN R -e "install.packages(c('mvtnorm', 'corpcor', 'tidyverse', 'magrittr', 'BiocManager'), repos = 'http://cran.us.r-project.org')"
-RUN R -e "BiocManager::install(c('martini','BioNet')"
+RUN R -e "BiocManager::install(c('martini','BioNet'))"
 RUN wget https://github.com/bedops/bedops/releases/download/v2.4.35/bedops_linux_x86_64-v2.4.35.tar.bz2 \
     && tar jxvf bedops_linux_x86_64-v2.4.35.tar.bz2 \
     && cp bin/* .
