@@ -54,6 +54,7 @@ process preprocess_data {
 
 	output:
 		set 'post_qc.bed', 'post_qc.bim', 'post_qc.fam', 'pheno' into filtered_bed_pipeline, filtered_bed_qc
+		file 'snps_75.prune.in' into qc_snps
 
 	"""
 	# QC + keep only SNPs in models + remove excluded SNPs
@@ -131,8 +132,8 @@ snp_pairs_null
 	.set { snp_pairs_null_filtered }
 
 process gene_epistasis {
-
-        tag { "${I}" }
+	
+	tag { "${I}" }
 
 	input:
 		file 'permuted_association_*' from snp_pairs_null_filtered .collect()
@@ -149,7 +150,7 @@ process gene_epistasis {
 	#!/usr/bin/env Rscript
 
 	library(tidyverse)
-        library(data.table)
+	library(data.table)
 
 	snp2snp <- read_tsv('$SNP2SNP', col_types = 'cccccc') %>%
 		data.table
@@ -158,7 +159,7 @@ process gene_epistasis {
 			read_tsv(x, col_types = 'ccccddd') %>%
 				mutate(uniq_snp_id = cbind(SNP1, SNP2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_')) %>%
 				data.table %>%
-                merge(snp2snp, by = 'uniq_snp_id', allow.cartesian = TRUE) %>%
+				merge(snp2snp, by = 'uniq_snp_id', allow.cartesian = TRUE) %>%
 				arrange(P) %>%
 				head(1) %>%
 				select(P)
@@ -213,7 +214,9 @@ process pathway_epistasis {
 	input:
 		file 'permuted_association_*' from gene_pairs_null .collect()
 		file GENE_PAIRS from gene_pairs
+		file SNP2GENE from snp2gene
 		file TAB2 from tab2
+		file SNPS from qc_snps // TODO should be filtered bim?
 
 	output:
 		file 'sign_gene_pairs.tsv'
@@ -248,20 +251,24 @@ process pathway_epistasis {
 		select(-experiment) %>%
 		select(gene_1, gene_2, P, everything())
 	write_tsv(gene_pairs_assoc, 'sign_gene_pairs.tsv')
+	sign_genes <- c(gene_pairs_assoc\$gene_1, gene_pairs_assoc\$gene_2) %>% unique
 		
 	# compute pathway association
 	net <- read_tsv('${TAB2}', col_types = cols(.default = col_character())) %>%
 		select(`Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
 		graph_from_data_frame
  
-	# TODO create background
-	bg <- NULL
+	# create background
+	snps <- read_tsv('${SNPS}', col_names = FALSE)\$X1
+	snp2gene <- read_tsv('${SNP2GENE}', col_types = 'cc')
+	bg <- snp2gene\$gene[snp2gene\$snp %in% snps]
 
 	lapply(filter(gene_pairs_assoc, P < 0.05)\$uniq_gene_id, function(uniq_gene_id) {
 			genes <- unlist(strsplit('a_b', split = '_'))
 			# TODO more than 1?
 			delete_edges(gsub('_', '|', 'uniq_gene_id', fixed = TRUE)) %>%
 				shortest_paths(from = genes[1], to = genes[2]) %>%
+				intersect %>%
 				goenrich(bg = bg)
 	}) %>%
 		do.call(bind_rows, .) %>%
@@ -299,22 +306,22 @@ if (params.prs != '') {
 		X[X == 2] = 'aa'
 		y <- gwas[['fam']][['affected']]
 
-        gwas <- as_tibble(X) %>%
-            mutate(y = y,
-                   prs = prs)
-        rm(X,y)
+		gwas <- as_tibble(X) %>%
+			mutate(y = y, prs = prs)
+		rm(X,y)
 
 		mapply(function(snp_1, snp_2) {
 			df <- as.data.frame(df[, c('y', 'prs', snp1, snp2)])
 			colnames(df) <- c('Y', 'PRS', 'SNP1', 'SNP2')
-            PRS_adjusted = lm(Y ~ PRS + SNP1 + SNP2 + SNP1*SNP2, df, na.action=na.exclude)
-            tibble(snp_1 = snp_1,
-                   snp_2 = snp_2,
-                   prs_adjusted_p = summary(PRS_adjusted)\$coefficients[5, 4])
+			PRS_adjusted = lm(Y ~ PRS + SNP1 + SNP2 + SNP1*SNP2, df, na.action=na.exclude)
+			
+			tibble(snp_1 = snp_1, 
+				   snp_2 = snp_2,
+				   prs_adjusted_p = summary(PRS_adjusted)\$coefficients[5, 4])
 
 			}, snp_pairs\$snp_1, snp_pairs\$snp_2) %>%
-            bind_rows %>%
-            write_tsv('prs_adjusted_sign_snp_pairs.tsv')
+			bind_rows %>%
+			write_tsv('prs_adjusted_sign_snp_pairs.tsv')
 		"""
 
 	}
