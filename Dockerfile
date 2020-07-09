@@ -15,6 +15,6 @@ RUN wget --no-check-certificate https://bioinfo.uth.edu/dmGWAS/dmGWAS_3.0.tar.gz
     && R -e 'install.packages("dmGWAS_3.0.tar.gz", repos = NULL, type="source")'
 RUN apt-get update && apt-get install -y procps
 RUN R -e "install.packages(c('ranger','SKAT','biglasso','bigmemory','igraph','LEANR','CASMAP'), repos = 'http://cran.us.r-project.org')"
-RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20200219.zip \
-    && unzip plink_linux_x86_20200219.zip
+RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20200616.zip \
+    && unzip plink_linux_x86_64_20200616.zip
 WORKDIR /home/docker
