@@ -82,6 +82,7 @@ process high_order_glm {
 
 process join_results {
 
+    executor = 'local'
     publishDir "$params.out", overwrite: true, mode: "copy"
 
     input:
