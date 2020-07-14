@@ -277,7 +277,7 @@ if (params.prs != '') {
 
 		input:
 			file SIGN_SNP_PAIRS from sign_snp_pairs
-			file PRS from params.prs
+			file PRS from file(params.prs)
 			set file(BED), file(BIM), file(FAM), file(PHENO) from filtered_bed_qc
 
 		output:
@@ -304,18 +304,17 @@ if (params.prs != '') {
                    prs = prs)
         rm(X,y)
 
-		mapply(function(snp_1, snp_2) {
-			df <- as.data.frame(df[, c('y', 'prs', snp1, snp2)])
-			colnames(df) <- c('Y', 'PRS', 'SNP1', 'SNP2')
-            PRS_adjusted = lm(Y ~ PRS + SNP1 + SNP2 + SNP1*SNP2, df, na.action=na.exclude)
-            tibble(snp_1 = snp_1,
-                   snp_2 = snp_2,
-                   prs_adjusted_p = summary(PRS_adjusted)\$coefficients[5, 4])
+	prs_adjust <- function(snp_1, snp_2, ...) {
+		df <- as.data.frame(gwas[, c('y', 'prs', snp_1, snp_2)])
+		colnames(df) <- c('Y', 'PRS', 'SNP1', 'SNP2')
+		PRS_adjusted = lm(Y ~ PRS + SNP1 + SNP2 + SNP1*SNP2, df, na.action=na.exclude)
+                summary(PRS_adjusted)\$coefficients[5, 4]
+	}
 
-			}, snp_pairs\$snp_1, snp_pairs\$snp_2) %>%
-            bind_rows %>%
-            write_tsv('prs_adjusted_sign_snp_pairs.tsv')
-		"""
+	snp_pairs %>%
+		mutate(prs_adjusted_p =  pmap_dbl(snp_pairs, prs_adjust)) %>%
+		write_tsv('prs_adjusted_sign_snp_pairs.tsv')
+	"""
 
 	}
 }
