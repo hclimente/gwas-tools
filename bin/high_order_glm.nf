@@ -92,8 +92,11 @@ process join_results {
         file 'scored_interactions.high_order_glm.tsv'
 
     """
-    echo "snp_set\ttest\tpvalue" >scored_interactions.high_order_glm.tsv 
-    cat scores_* >>scored_interactions.high_order_glm.tsv
+    echo "snp_set\ttest\tpvalue" >scored_interactions.high_order_glm.tsv
+    for file in scores_*
+    do
+        cat "\$file" >>scored_interactions.high_order_glm.tsv
+    done
     """
 
 }
