@@ -228,6 +228,8 @@ process pathway_epistasis {
 
 	library(tidyverse)
 	library(igraph)
+	library(clusterProfiler)
+	library(msigdbr)
 
 	# compute gene-pair association
 	gene_pairs <- read_tsv('${GENE_PAIRS}') %>%
@@ -264,13 +266,17 @@ process pathway_epistasis {
 	snp2gene <- read_tsv('${SNP2GENE}', col_types = 'cc')
 	bg <- snp2gene\$gene[snp2gene\$snp %in% snps]
 
+	# import MSigDB Gene Sets
+	m_df = msigdbr(species = "Homo sapiens")
+	m_t2g = m_df %>% dplyr::select(gs_name, gene_symbol) %>% as.data.frame()
+
 	lapply(filter(gene_pairs_assoc, P < 0.05)\$uniq_gene_id, function(uniq_gene_id) {
 			genes <- unlist(strsplit('a_b', split = '_'))
 			# TODO more than 1?
 			delete_edges(gsub('_', '|', 'uniq_gene_id', fixed = TRUE)) %>%
 				shortest_paths(from = genes[1], to = genes[2]) %>%
 				intersect %>%
-				goenrich(bg = bg)
+				enricher(TERM2GENE = m_t2g, universe = bg)
 	}) %>%
 		do.call(bind_rows, .) %>%
 		write_tsv('sign_pathways.tsv')	
