@@ -171,8 +171,9 @@ process gene_epistasis {
 	snp_pairs <- read_tsv('${SNP_PAIRS}', col_types = 'ccccddd') %>%
 		mutate(uniq_snp_id = cbind(SNP1, SNP2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_')) %>%
 		filter(P < threshold) %>%
+		mutate(Padj = (P * .05) / threshold) %>%
 		inner_join(snp2snp, by = 'uniq_snp_id') %>%
-		select(uniq_snp_id, P)
+		select(uniq_snp_id, Padj)
 
 	if (${I} == 1) {
 		separate(snp_pairs, uniq_snp_id, into = c('snp_1','snp_2'), sep = '_') %>%
@@ -188,9 +189,9 @@ process gene_epistasis {
 			   uniq_gene_id = cbind(gene_1, gene_2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_')) %>%
 		inner_join(snp_pairs, by = 'uniq_snp_id') %>%
 		group_by(uniq_gene_id) %>%
-		summarize(tau_05 = prod(P[P < 0.05]),
-				  tau_01 = prod(P[P < 0.01]),
-				  tau_001 = prod(P[P < 0.001]),
+		summarize(tau_05 = prod(Padj[Padj < 0.05]),
+				  tau_01 = prod(Padj[Padj < 0.01]),
+				  tau_001 = prod(Padj[Padj < 0.001]),
 			 	  snp_pairs = paste(unique(uniq_snp_id), collapse = ',')) %>%
 		write_tsv('scored_gene_pairs.tsv')
 	"""
