@@ -193,8 +193,8 @@ process gene_epistasis {
 				  tau_01 = prod(Padj[Padj < 0.01]),
 				  tau_001 = prod(Padj[Padj < 0.001]),
 			 	  snp_pairs = paste(unique(uniq_snp_id), collapse = ',')) %>%
-		write_tsv('scored_gene_pairs.tsv')
-	"""
+        write_tsv('scored_gene_pairs.tsv')
+    """
 
 }
 
@@ -224,63 +224,68 @@ process pathway_epistasis {
 		file 'sign_pathways.tsv'
 
 	"""
-	#!/usr/bin/env Rscript
+    #!/usr/bin/env Rscript
 
-	library(tidyverse)
-	library(igraph)
-	library(clusterProfiler)
-	library(msigdbr)
+    library(tidyverse)
+    library(igraph)
+    library(clusterProfiler)
+    library(msigdbr)
 
 	# compute gene-pair association
-	gene_pairs <- read_tsv('${GENE_PAIRS}') %>%
-		mutate(experiment = 'original')
-	studied_gene_pairs <- gene_pairs\$uniq_gene_id		
+    gene_pairs <- read_tsv('${GENE_PAIRS}') %>%
+        mutate(experiment = 'original')
+    studied_gene_pairs <- gene_pairs\$uniq_gene_id		
+    permutations <- list.files(pattern = 'permuted_association_')
+    N <- length(permutations) + 1
 
-	gene_pairs_assoc <- lapply(list.files(pattern = 'permuted_association_'), function(x) {
-			read_tsv(x, col_types = 'cdddc') %>%
-				filter(uniq_gene_id %in% studied_gene_pairs)
-		}) %>%
-		do.call(bind_rows, .) %>%
-		mutate(experiment = 'permutation') %>%
-		bind_rows(gene_pairs) %>%
-		group_by(uniq_gene_id) %>%
-		mutate(P_tau_05 = rank(tau_05) / n(),
-			   P_tau_01 = rank(tau_01) / n(),
-			   P_tau_001 = rank(tau_001) / n(),
-			   min_P = pmin(P_tau_05, P_tau_01, P_tau_001),
-			   P = rank(min_P) / n() ) %>%
-		filter(experiment == 'original') %>%
-		separate(uniq_gene_id, into = c('gene_1', 'gene_2'), sep = '_') %>%
-		select(-experiment) %>%
-		select(gene_1, gene_2, P, everything())
-	write_tsv(gene_pairs_assoc, 'sign_gene_pairs.tsv')
-	sign_genes <- c(gene_pairs_assoc\$gene_1, gene_pairs_assoc\$gene_2) %>% unique
-		
-	# compute pathway association
-	net <- read_tsv('${TAB2}', col_types = cols(.default = col_character())) %>%
-		select(`Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
-		graph_from_data_frame
+    gene_pairs_assoc <- lapply(permutations, function(x) {
+        read_tsv(x, col_types = 'cdddc') %>%
+            filter(uniq_gene_id %in% studied_gene_pairs)
+    }) %>%
+        do.call(bind_rows, .) %>%
+        mutate(experiment = 'permutation') %>%
+        bind_rows(gene_pairs) %>%
+        group_by(uniq_gene_id) %>%
+        mutate(P_tau_05 = rank(tau_05) / N,
+               P_tau_01 = rank(tau_01) / N, 
+               P_tau_001 = rank(tau_001) / N,
+               min_P = pmin(P_tau_05, P_tau_01, P_tau_001),
+               P = rank(min_P) / N ) %>%
+        filter(experiment == 'original') %>%
+        separate(uniq_gene_id, into = c('gene_1', 'gene_2'), sep = '_') %>%
+        select(-experiment) %>%
+        select(gene_1, gene_2, P, everything())
+    write_tsv(gene_pairs_assoc, 'sign_gene_pairs.tsv')
+    
+    sign_pairs <- filter(gene_pairs_assoc, P < .05)
+    sign_genes <- c(sign_pairs\$gene_1, sign_pairs\$gene_2) %>% unique
+
+    # compute pathway association
+    net <- read_tsv('${TAB2}', col_types = cols(.default = col_character())) %>%
+        select(`Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
+        graph_from_data_frame(directed = FALSE)
  
 	# create background
-	snps <- read_tsv('${SNPS}', col_names = FALSE)\$X1
-	snp2gene <- read_tsv('${SNP2GENE}', col_types = 'cc')
-	bg <- snp2gene\$gene[snp2gene\$snp %in% snps]
+    snps <- read_tsv('${SNPS}', col_names = FALSE)\$X1
+    snp2gene <- read_tsv('${SNP2GENE}', col_types = 'cc')
+    bg <- snp2gene\$gene[snp2gene\$snp %in% snps]
 
-	# import MSigDB Gene Sets
-	m_df = msigdbr(species = "Homo sapiens")
-	m_t2g = m_df %>% dplyr::select(gs_name, gene_symbol) %>% as.data.frame()
+    # import MSigDB Gene Sets
+    m_df = msigdbr(species = "Homo sapiens")
+    m_t2g = m_df %>% dplyr::select(gs_name, gene_symbol) %>% as.data.frame()
 
-	lapply(filter(gene_pairs_assoc, P < 0.05)\$uniq_gene_id, function(uniq_gene_id) {
-			genes <- unlist(strsplit('a_b', split = '_'))
-			# TODO more than 1?
-			delete_edges(gsub('_', '|', 'uniq_gene_id', fixed = TRUE)) %>%
-				shortest_paths(from = genes[1], to = genes[2]) %>%
-				intersect %>%
-				enricher(TERM2GENE = m_t2g, universe = bg, pAdjustMethod = "bonferroni")
-	}) %>%
-		do.call(bind_rows, .) %>%
-		write_tsv('sign_pathways.tsv')	
-	"""
+    mapply(function(gene_1, gene_2) {
+        # TODO more than 1?
+        delete_edges(net, paste(gene_1, gene_2, sep = '|')) %>%
+            shortest_paths(from = gene_1, to = gene_2) %>%
+            .\$vpath %>% unlist %>% names %>%
+            intersect(sign_genes) %>%
+            enricher(TERM2GENE = m_t2g, universe = bg, pAdjustMethod = 'bonferroni')
+    }, sign_pairs\$gene_1, sign_pairs\$gene_2) %>%
+        lapply(as_tibble) %>%
+        bind_rows %>%
+        write_tsv('sign_pathways.tsv')	
+    """
 
 }
 
