@@ -276,7 +276,7 @@ process pathway_epistasis {
 			delete_edges(gsub('_', '|', 'uniq_gene_id', fixed = TRUE)) %>%
 				shortest_paths(from = genes[1], to = genes[2]) %>%
 				intersect %>%
-				enricher(TERM2GENE = m_t2g, universe = bg)
+				enricher(TERM2GENE = m_t2g, universe = bg, pAdjustMethod = "bonferroni")
 	}) %>%
 		do.call(bind_rows, .) %>%
 		write_tsv('sign_pathways.tsv')	
