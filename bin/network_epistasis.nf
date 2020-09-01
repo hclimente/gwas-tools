@@ -278,13 +278,15 @@ process pathway_epistasis {
         neighborhood <- delete_edges(net, paste(gene_1, gene_2, sep = '|')) %>%
             shortest_paths(from = gene_1, to = gene_2) %>%
             .\$vpath %>% unlist %>% names %>%
-            intersect(sign_genes)
+            intersect(sign_genes) %>%
+            sort
         if (length(neighborhood) >= 3) {
             enricher(neighborhood, TERM2GENE = m_t2g, universe = bg, pAdjustMethod = 'bonferroni')
         }
     }, sign_pairs\$gene_1, sign_pairs\$gene_2) %>%
         lapply(as_tibble) %>%
         bind_rows %>%
+        unique %>%
         write_tsv('sign_pathways.tsv')	
     """
 
