@@ -1,6 +1,6 @@
 # gwas-tools
 
-[![Docker Pulls](https://img.shields.io/docker/cloud/build/hclimente/gwas-tools.svg?style=popout-square&logo=docker)](https://cloud.docker.com/swarm/hclimente/repository/docker/hclimente/gwas-tools)
+[![Docker Pulls](https://img.shields.io/docker/cloud/build/hclimente/gwas-tools.svg?style=popout-square&logo=docker)](https://hub.docker.com/repository/docker/hclimente/gwas-tools)
 
 This repository contains pipelines for common use-cases when dealing with GWAS datasets, from data preprocessing to biomarker discovery. 
 
@@ -27,12 +27,12 @@ The pipelines are written in [Nextflow](https://www.nextflow.io/), and makes use
     - [Lift coordinates]()
 
 - Network GWAS
-    - [dmGWAS]()
-    - [heinz]()
-    - [HotNet2]()
-    - [LEAN]()
-    - [SConES]()
-    - [Sigmod]()
+    - [dmGWAS](#dmgwas)
+    - [heinz](#heinz)
+    - [HotNet2](#hotnet2)
+    - [LEAN](#lean)
+    - [SConES](#scones)
+    - [Sigmod](#sigmod)
 
 - Epistasis detection
     - [MB-MDR]()
@@ -48,7 +48,7 @@ impute --bfile test/data/example --strand_info test/data/strand_info.txt --popul
 ### Run VEGAS2
 
 ```
-vegas2.nf --bfile test/data/example -with-docker hclimente/gwas-tools
+vegas2.nf --bfile test/data/example --gencode 31 --genome 37 --buffer 50000 --vegas_params '-top 10' -with-docker hclimente/gwas-tools
 ```
 
 ### Map SNPs to GENCODE genes
@@ -58,6 +58,42 @@ snp2gene.nf --bim test/data/example.map --genome GRCh38 -with-docker hclimente/g
 ```
 
 ## Network GWAS
+
+### dmGWAS
+
+```
+dmgwas.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools
+```
+
+### heinz
+
+```
+heinz.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 --fdr 0.5 -with-docker hclimente/gwas-tools
+```
+
+### HotNet2
+
+```
+hotnet2.nf --scores scored_genes.top10.txt --tab2 test/data/interactions.tab2 --hotnet2_path hotnet2 --lfdr_cutoff 0.125 -with-docker hclimente/gwas-tools
+```
+
+### LEAN
+
+```
+lean.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools
+```
+
+### SConES
+
+```
+old_scones.nf --bfile test/data/example.map --network gi --snp2gene test/data/snp2gene.tsv --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools
+```
+
+### Sigmod
+
+```
+sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools
+```
 
 # Dependencies
 
@@ -75,6 +111,7 @@ snp2gene.nf --bim test/data/example.map --genome GRCh38 -with-docker hclimente/g
 | [PLINK 1.90](https://www.cog-genomics.org/plink/1.9) | Yes      | [GPLv3](https://www.cog-genomics.org/plink/1.9/general_usage)
 | R::biglasso  | Yes      | [GPLv3](https://cran.r-project.org/web/packages/biglasso/)
 | R::bigmemory | Yes      | [LGPLv3](https://cran.r-project.org/web/packages/bigmemory/)
+| R::CASMAP    | Yes      | [GPLv2](https://cran.r-project.org/web/packages/CASMAP/index.html)
 | R::BioNet    | Yes      | [GPLv2](https://bioconductor.org/packages/release/bioc/html/BioNet.html)
 | R::dmGWASv3  | Yes      | [GPLv2](https://bioinfo.uth.edu/dmGWAS/dmGWAS_3.0-manual.pdf)
 | R::igraph    | Yes      | [GPLv3](https://cran.r-project.org/web/packages/igraph/)

@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 params.out = "."
+pheno_type = (params.phenotype == 'discrete')? 'c' : 'r'
 
 // gwas
 bed = file("${params.bfile}.bed")
@@ -45,13 +46,14 @@ process genepi {
     input:
     file GEN from gen
     file PHENO from pheno
+    val PHENO_TYPE from pheno_type 
 
     output:
     file 'crossGeneResult/Result.csv'
 
     script:
     """
-    GenEpi -g ${GEN} -p ${PHENO} -o ./
+    GenEpi -g ${GEN} -p ${PHENO} -m ${PHENO_TYPE} -o ./
     """
 
 }

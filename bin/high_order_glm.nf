@@ -6,9 +6,10 @@ params.out = '.'
 bed = file("${params.bfile}.bed")
 bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
 fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+covars = file("${params.covars}")
 
 // tested snps
-snp_set = file("${params.snp_set}")
+interactions = file("${params.interactions}")
 
 process bed2r {
 
@@ -26,15 +27,17 @@ process bed2r {
 }
 
 process high_order_glm {
-
-    publishDir "$params.out", overwrite: true, mode: "copy"
+    
+    errorStrategy 'ignore'
 
     input:
         file RGWAS from rgwas
-        file SNPS from snp_set
+        file INTERACTIONS from interactions
+        val I from 1..(interactions.countLines() - 1)
+        file COVARS from covars
 
     output:
-        file 'scored_interactions.high_order_glm.tsv'
+        file "scores_${I}.tsv" into scores
 
     script:
     """
@@ -42,24 +45,58 @@ process high_order_glm {
 
     library(tidyverse)
 
-    snps <- read_tsv('${SNPS}')\$snp
+    snps <- strsplit(read_tsv('${INTERACTIONS}')\$snp_sets[${I}], '_') %>% unlist
+    covars <- read_tsv('${COVARS}')
+    # do some kind of matching using sample ids
 
     load('${RGWAS}')
 
     X <- as(gwas[['genotypes']], 'numeric')
-    X[is.na(X)] = 0 # change?
+    X <- X[, snps]
+    X[is.na(X)] = 0 # TODO change?
+    X[X == 0] = 'AA'
+    X[X == 1] = 'Aa'
+    X[X == 2] = 'aa'
+
     y <- gwas[['fam']][['affected']] - 1
 
-    intx <- model.matrix(~.^100,data = as.data.frame(X[, snps])) %>%
+    rm(gwas)
+
+    intx <- model.matrix(~.^100,data = as.data.frame(X)) %>%
         as_tibble %>%
-        mutate(y = y)
+        mutate(y = y) %>%
+        bind_cols(covars)
+
+    rm(X,y)
 
     fit <- glm(y ~ ., data = intx)
     pvals <- coef(summary(fit))[,'Pr(>|t|)']
 
-    tibble(snps = names(pvals),
+    tibble(snp_set = paste(snps, collapse = '_'),
+           test = names(pvals),
            p_value = pvals) %>%
-        write_tsv('scored_interactions.high_order_glm.tsv')
+        write_tsv('scores_${I}.tsv', col_names = FALSE)
+    """
+
+}
+
+process join_results {
+
+    executor = 'local'
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file "*" from scores.collect()
+
+    output:
+        file 'scored_interactions.high_order_glm.tsv'
+
+    """
+    echo "snp_set\ttest\tpvalue" >scored_interactions.high_order_glm.tsv
+    for file in scores_*
+    do
+        cat "\$file" >>scored_interactions.high_order_glm.tsv
+    done
     """
 
 }
