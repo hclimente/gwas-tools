@@ -26,5 +26,5 @@ scores <- read_tsv('${VEGAS_OUT}') %>%
 scored_net <- construct_scored_net(net, interaction_indices = c(1,2), gene_ps = scores)
 res_info <- SigMod_bisection(net = scored_net)
 
-data.frame(gene = names(V(res_info\$opt_module\$selected))) %>%
+data.frame(gene = names(V(res_info\$opt_module[[1]]))) %>%
     write_tsv('selected_genes.sigmod.txt')
