@@ -12,9 +12,10 @@ params.network = 'gs'
 params.score = 'chi2'
 params.criterion = 'consistency'
 params.encoding = 'additive'
+params.eta = null
+params.lambda = null
 
 // additional files
-
 snp2gene = (params.network == 'gm' | params.network == 'gi') ? file(params.snp2gene) : file('NO_SNP2GENE')
 tab2 = (params.network == 'gi') ? file(params.tab2) : file('NO_TAB2')
 
@@ -74,20 +75,42 @@ process create_network {
     """
 }
 
-process scones {
+if (params.eta == null | params.lambda == null) {
+    process scones {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
+        publishDir "$params.out", overwrite: true, mode: "copy"
 
-    input:
-        file RGWAS from rgwas_scones
-        file RNET
-        val SCORE from params.score
-        val CRITERION from params.criterion
+        input:
+            file RGWAS from rgwas_scones
+            file RNET
+            val SCORE from params.score
+            val CRITERION from params.criterion
 
-    output:
-        file 'cones.tsv'
+        output:
+            file 'cones.tsv'
 
-    script:
-    template 'discovery/run_old_scones.R'
+        script:
+        template 'discovery/run_old_scones.R'
 
+        }
+} else {
+    process parametrized_scones {
+
+        publishDir "$params.out", overwrite: true, mode: "copy"
+
+        input:
+            file RGWAS from rgwas_scones
+            file RNET
+            val SCORE from params.score
+            val CRITERION from params.criterion
+            val ETA from params.eta
+            val LAMBDA from params.lambda
+
+        output:
+            file 'cones.tsv'
+
+        script:
+        template 'discovery/run_old_scones_params.R'
+
+        }
 }
