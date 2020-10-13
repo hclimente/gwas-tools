@@ -1,6 +1,8 @@
 #!/usr/bin/env nextflow
 
 params.out = '.'
+params.r = 0.1
+params.d = 2
 
 // annotation
 VEGAS_OUT = file(params.vegas)
@@ -13,6 +15,8 @@ process dmgwas {
     input:
         file VEGAS_OUT
         file TAB2
+        val D from params.d
+        val R from params.r
 
     output:
         file 'selected_genes.dmgwas.txt'
@@ -33,7 +37,7 @@ process dmgwas {
                interactorB = `Official Symbol Interactor B`) %>%
         select(interactorA, interactorB)
 
-    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, r = 0.1, d = 2)
+    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, r = ${R}, d = ${D})
     top <- simpleChoose(modules)
 
     tibble(gene = names(V(top\$subnetwork))) %>%

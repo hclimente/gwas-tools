@@ -42,8 +42,7 @@ process heinz {
     scores <- scoreNodes(net, fb, fdr = ${FDR})
 
     if (sum(scores > 0)) {
-	selected <- runFastHeinz(net, scores)
-    
+        selected <- runFastHeinz(net, scores)    
     	tibble(gene = names(V(selected))) %>% 
             write_tsv('selected_genes.heinz.txt')
     } else {
