@@ -17,4 +17,5 @@ RUN apt-get update && apt-get install -y procps
 RUN R -e "install.packages(c('ranger','SKAT','biglasso','bigmemory','igraph','LEANR','CASMAP'), repos = 'http://cran.us.r-project.org')"
 RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20200616.zip \
     && unzip plink_linux_x86_64_20200616.zip
+RUN wget https://vegas2.qimrberghofer.edu.au/vegas2v2 && chmod a+x vegas2v2
 WORKDIR /home/docker

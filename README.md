@@ -121,4 +121,4 @@ sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/int
 | R::SigModv2  | No       | ?
 | R::SKAT      | Yes      | [GPLv3](https://cran.r-project.org/web/packages/SKAT/)
 | R::snpStats  | Yes      | [GPLv3](http://bioconductor.org/packages/release/bioc/html/snpStats.html)
-| [VEGAS2v02](https://vegas2.qimrberghofer.edu.au/) | No       | ?
+| [VEGAS2v02](https://vegas2.qimrberghofer.edu.au/) | Yes       | [GPLv3](https://vegas2.qimrberghofer.edu.au/vegas2v2)
