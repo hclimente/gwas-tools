@@ -21,10 +21,11 @@ scores <- read_tsv('${VEGAS_OUT}') %>%
     select(gene, p) %>%
     as.data.frame
 
-#my_genes_to_exclude <- vegas[which((vegas\$nSNPs <5) & (vegas\$Pvalue > 0.05)),2]
 # check weight_index = NULL
 scored_net <- construct_scored_net(net, interaction_indices = c(1,2), gene_ps = scores)
-res_info <- SigMod_bisection(net = scored_net)
+res_info <- SigMod_bisection(net = scored_net, lambda_max = ${LAMBDAMAX}, nmax = ${NMAX}, maxjump = ${MAXJUMP})
 
-data.frame(gene = names(V(res_info\$opt_module\$selected))) %>%
+save(scored_net, res_info, file = 'sigmod.RData')
+
+data.frame(gene = names(V(res_info\$opt_module[[1]]))) %>%
     write_tsv('selected_genes.sigmod.txt')
