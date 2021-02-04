@@ -2,8 +2,28 @@
 
 params.out = '.'
 
+params.loki = ''
 snp2gene = file(params.snp2gene)
-loki = file(params.loki)
+
+
+if (params.loki != '') {
+
+    process build_loki {
+
+        publishDir "$params.out", overwrite: true, mode: "copy"
+
+        output:
+            file "loki_*.db" into loki
+
+        """
+        loki-build.py --verbose --knowledge loki_`date +%Y%m%d`.db --update
+        """
+    
+    }
+
+} else {
+    loki = file(params.loki)
+}
 
 process get_genes {
 
