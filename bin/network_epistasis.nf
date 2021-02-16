@@ -231,7 +231,7 @@ process pathway_epistasis {
     library(clusterProfiler)
     library(msigdbr)
 
-	# compute gene-pair association
+    # compute gene-pair association
     gene_pairs <- read_tsv('${GENE_PAIRS}') %>%
         mutate(experiment = 'original')
     studied_gene_pairs <- gene_pairs\$uniq_gene_id		
@@ -261,14 +261,18 @@ process pathway_epistasis {
     sign_genes <- c(sign_pairs\$gene_1, sign_pairs\$gene_2) %>% unique
 
     # compute pathway association
-    net <- read_tsv('${TAB2}', col_types = cols(.default = col_character())) %>%
-        select(`Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
+    tab2 <- read_tsv('${TAB2}', col_types = cols(.default = col_character()))
+    net <- select(tab2, `Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
         graph_from_data_frame(directed = FALSE)
  
 	# create background
     snps <- read_tsv('${SNPS}', col_names = FALSE)\$X1
     snp2gene <- read_tsv('${SNP2GENE}', col_types = 'cc')
-    bg <- snp2gene\$gene[snp2gene\$snp %in% snps]
+    bg <- snp2gene %>%
+        filter(!is.na(gene) & !is.na(snp)) %>%
+        filter(gene %in% c(tab2\$`Official Symbol Interactor A`, tab2\$`Official Symbol Interactor B`)) %>%
+        filter(snp %in% snps) %>%
+        .\$gene
 
     # import MSigDB Gene Sets
     m_df = msigdbr(species = "Homo sapiens")
