@@ -22,7 +22,7 @@ process bed2r {
 
 }
 
-process grow_forest {
+process random_forest {
 
     input:
         file RGWAS from rgwas_train
