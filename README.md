@@ -109,6 +109,8 @@ sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/int
 | liftOver     | No       | [Copyright](http://hgdownload.soe.ucsc.edu/admin/exe/)
 | [MB-MDR](http://bio3.giga.ulg.ac.be/index.php/software/mb-mdr/) | No       | ?
 | [PLINK 1.90](https://www.cog-genomics.org/plink/1.9) | Yes      | [GPLv3](https://www.cog-genomics.org/plink/1.9/general_usage)
+| [SMMB](https://www.ls2n.fr/listelogicielsequipe/DUKe/128/) | No       | Freeware
+| [VEGAS2v02](https://vegas2.qimrberghofer.edu.au/) | Yes       | [GPLv3](https://vegas2.qimrberghofer.edu.au/vegas2v2)
 | R::biglasso  | Yes      | [GPLv3](https://cran.r-project.org/web/packages/biglasso/)
 | R::bigmemory | Yes      | [LGPLv3](https://cran.r-project.org/web/packages/bigmemory/)
 | R::CASMAP    | Yes      | [GPLv2](https://cran.r-project.org/web/packages/CASMAP/index.html)
@@ -121,4 +123,3 @@ sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/int
 | R::SigModv2  | No       | ?
 | R::SKAT      | Yes      | [GPLv3](https://cran.r-project.org/web/packages/SKAT/)
 | R::snpStats  | Yes      | [GPLv3](http://bioconductor.org/packages/release/bioc/html/snpStats.html)
-| [VEGAS2v02](https://vegas2.qimrberghofer.edu.au/) | Yes       | [GPLv3](https://vegas2.qimrberghofer.edu.au/vegas2v2)
