@@ -99,7 +99,7 @@ sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/int
 
 | Tool         | Docker'd | License   
 | -------------|:---------|:----------
-| AntEpiSeeker | No       | ?         
+| [AntEpiSeeker](http://nce.ads.uga.edu/~romdhane/AntEpiSeeker/) | No       | ?         
 | BEAM         | No       | ?         
 | BEDOPS       | Yes      | [GPLv2](https://github.com/bedops/bedops/blob/master/LICENSE)
 | [Biofilter](https://ritchielab.org/research/research-areas/expert-knowledge-bioinformatics/methods/biofilter)    | No       | ?
