@@ -29,7 +29,6 @@ process random_forest {
 
     output:
         file 'forest.RData' into forest
-        file 'snp_pairs.tsv' into pairs
 
     """
     #!/usr/bin/env Rscript
@@ -48,26 +47,49 @@ process random_forest {
 
     rf <- ranger(dependent.variable.name = 'phenotype', data = gwas, importance = 'impurity')
     save(rf, file = 'forest.RData')
+    """
+
+}
+
+process extract_epistatic_snps {
+
+    publishDir "$params.out", overwrite: true, mode: "copy"
+
+    input:
+        file FOREST from forest
+
+    output:
+        file 'scored_interactions.rf.txt' into pairs
+
+    """
+    #!/usr/bin/env Rscript
+
+    library(ranger)
+    library(tidyverse)
+
+    load("${FOREST}")
 
     snps <- lapply(seq(1, 500), function(i) {
         nodes <- treeInfo(rf,i)[['splitvarName']]
         names(nodes) <- treeInfo(rf,i)[['nodeID']]
-        bind_rows(
-                  treeInfo(rf,i)[,c('nodeID','leftChild')] %>% rename(otherNodeID = leftChild),
-                  treeInfo(rf,i)[,c('nodeID','rightChild')] %>% rename(otherNodeID = rightChild)
-                 ) %>%
+        bind_rows(treeInfo(rf,i)[,c('nodeID','leftChild')] %>% rename(otherNodeID = leftChild),
+                  treeInfo(rf,i)[,c('nodeID','rightChild')] %>% rename(otherNodeID = rightChild)) %>%
             mutate(snp1 = nodes[nodeID + 1], snp2 = nodes[otherNodeID + 1]) %>%
-            filter(!is.na(snp2)) %>%
-            select(snp1, snp2)
-    }) %>%
+            filter(!is.na(snp2) & snp1 != snp2) %>%
+            mutate(uniq_snp_id = cbind(snp1, snp2) %>% apply(1, sort) %>% apply(2, paste, collapse = '_')) %>%
+            select(uniq_snp_id)
+        }) %>%
         do.call(rbind, .) %>% 
-        unique %>%
-        filter(snp1 != snp2)
+        group_by(uniq_snp_id) %>%
+        summarize(n = n()) %>%
+        ungroup() %>%
+        separate(uniq_snp_id, into=c('snp1','snp2'), sep='_')
+
     imp <- importance(rf)
     top_snps <- tail(sort(imp), n = floor(length(imp) * 0.2)) %>% names
     snps %>%
         filter(snp1 %in% top_snps | snp2 %in% top_snps) %>%
-        write_tsv('snp_pairs.tsv')
+        write_tsv('scored_interactions.rf.txt')
     """
 
 }
