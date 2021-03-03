@@ -6,7 +6,7 @@ params.loki = ''
 snp2gene = file(params.snp2gene)
 
 
-if (params.loki != '') {
+if (params.loki == '') {
 
     process build_loki {
 
@@ -31,7 +31,7 @@ process get_genes {
         file SNP2GENE from snp2gene
 
     output:
-        file GENES into genes
+        file 'genes' into genes
 
     """
     cut -f2 ${SNP2GENE} | tail -n +2 | sort | uniq >genes
