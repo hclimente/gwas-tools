@@ -8,7 +8,7 @@ bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
 fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
 n_snps = Channel
-        .fromPath("${BIM}")
+        .fromPath("${bim}")
         .splitText()
         .count()
 
@@ -50,10 +50,10 @@ process r2aes {
 
 }
 
-process run_AntEpiSeeker {
+process antepiseeker {
 
     publishDir "$params.out", overwrite: true, mode: "copy"
-    validExitStatus 0,1
+    //validExitStatus 0,1
 
     input:
         val N from n_snps
@@ -65,8 +65,8 @@ process run_AntEpiSeeker {
     """
     cat << EOF >parameters.txt
     iAntCount        5000         // number of ants
-    iItCountLarge    ${N * 0.1}   // number of iterations for the large haNplotypes
-    iItCountSmall    ${N * 0.05}  // number of iterations for the small haplotypes
+    iItCountLarge    ${(N * 0.1).intValue()}   // number of iterations for the large haplotypes
+    iItCountSmall    ${(N * 0.05).intValue()}  // number of iterations for the small haplotypes
     alpha            1            // weight given to pheromone deposited by ants
     iTopModel        1000         // number of top ranking haplotypes in the first stage
     iTopLoci         1000         // number of loci with top ranking pheromone in the first stage
@@ -75,9 +75,9 @@ process run_AntEpiSeeker {
     largehapsize     6            // size of the large haplotypes
     smallhapsize     3            // size of the small haplotypes
     iEpiModel        2            // number of SNPs in an epistatic interaction
-    pvalue          0.01          // p value threshold (after Bonferroni correction)
-    INPFILE         ${AES_IN}     // input file name for case-control genotype data
-    OUTFILE         result.txt    // output file name for detected epistatic interactions
+    pvalue           0.01          // p value threshold (after Bonferroni correction)
+    INPFILE          ${AES_IN}     // input file name for case-control genotype data
+    OUTFILE          result.txt    // output file name for detected epistatic interactions
     EOF
 
     AntEpiSeeker
