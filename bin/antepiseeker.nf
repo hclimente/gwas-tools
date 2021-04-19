@@ -70,14 +70,14 @@ process antepiseeker {
     alpha            1            // weight given to pheromone deposited by ants
     iTopModel        1000         // number of top ranking haplotypes in the first stage
     iTopLoci         1000         // number of loci with top ranking pheromone in the first stage
-    rou              0.05         // evaporation rate in Ant Colony Optimizaion
+    rou              0.05         // evaporation rate in Ant Colony Optimization
     phe              100          // initial pheromone level for each locus
     largehapsize     6            // size of the large haplotypes
     smallhapsize     3            // size of the small haplotypes
     iEpiModel        2            // number of SNPs in an epistatic interaction
-    pvalue           0.01          // p value threshold (after Bonferroni correction)
-    INPFILE          ${AES_IN}     // input file name for case-control genotype data
-    OUTFILE          result.txt    // output file name for detected epistatic interactions
+    pvalue           0.01         // p value threshold (after Bonferroni correction)
+    INPFILE          ${AES_IN}    // input file name for case-control genotype data
+    OUTFILE          result.txt   // output file name for detected epistatic interactions
     EOF
 
     AntEpiSeeker
