@@ -21,7 +21,6 @@ The pipelines are written in [Nextflow](https://www.nextflow.io/), and makes use
     - [Data preprocessing](#data_preprocessing)
     - [Network-guided GWAS](#network_gwas)
 - Epistasis detection
-    - [Epistasis detection]()
     - [Network-guided epistasis detection](#network_epistasis)
 
 
