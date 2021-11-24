@@ -17,82 +17,52 @@ The pipelines are written in [Nextflow](https://www.nextflow.io/), and makes use
 
 # Functions
 
-- Data preprocessing
-    - [Impute a dataset](#impute-a-dataset)
-    - [PCA on a dataset]()
-    - [Run VEGAS2 on a dataset](#run-vegas2)
-    - [Map SNPs to genes](#map-snps-to-gencode-genes)
-    - [Map eQTLs to their regulated genes]()
-    - [Filter SNPs with Biofilter]()
-    - [Lift coordinates]()
-
-- Network GWAS
-    - [dmGWAS](#dmgwas)
-    - [heinz](#heinz)
-    - [HotNet2](#hotnet2)
-    - [LEAN](#lean)
-    - [SConES](#scones)
-    - [Sigmod](#sigmod)
-
+- GWAS
+    - [Data preprocessing](#data_preprocessing)
+    - [Network-guided GWAS](#network_gwas)
 - Epistasis detection
-    - [MB-MDR]()
+    - [Epistasis detection]()
+    - [Network-guided epistasis detection](#network_epistasis)
 
-## Data preprocessing
 
-### Impute a dataset
+## GWAS
 
-```
-impute --bfile test/data/example --strand_info test/data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools
-```
+### Data preprocessing
+<a name="data_preprocessing"></a>
 
-### Run VEGAS2
+- Impute a dataset: `impute --bfile test/data/example --strand_info test/data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools`
+- Run VEGAS2: `vegas2.nf --bfile test/data/example --gencode 31 --genome 37 --buffer 50000 --vegas_params '-top 10' -with-docker hclimente/gwas-tools`
+- Map SNPs to GENCODE genes: `snp2gene.nf --bim test/data/example.map --genome GRCh38 -with-docker hclimente/gwas-tools`
 
-```
-vegas2.nf --bfile test/data/example --gencode 31 --genome 37 --buffer 50000 --vegas_params '-top 10' -with-docker hclimente/gwas-tools
-```
+### Network-guided GWAS
+<a name="network_gwas"></a>
 
-### Map SNPs to GENCODE genes
+We adapted and benchmarked multiple algorithms for the detection of SNPs associated to a phenotype. If you use any of the following algorithms, please cite the following article:
 
-```
-snp2gene.nf --bim test/data/example.map --genome GRCh38 -with-docker hclimente/gwas-tools
-```
+> Climente-González H, Lonjou C, Lesueur F, GENESIS study group, Stoppa-Lyonnet D, et al. (2021) **Boosting GWAS using biological networks: A study on susceptibility to familial breast cancer.** PLOS Computational Biology 17(3): e1008819. https://doi.org/10.1371/journal.pcbi.1008819
 
-## Network GWAS
+The available methods are:
 
-### dmGWAS
+- dmGWAS: `dmgwas.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
+- heinz: `heinz.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 --fdr 0.5 -with-docker hclimente/gwas-tools`
+- HotNet2: `hotnet2.nf --scores scored_genes.top10.txt --tab2 test/data/interactions.tab2 --hotnet2_path hotnet2 --lfdr_cutoff 0.125 -with-docker hclimente/gwas-tools`
+- LEAN: `lean.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
+- SConES: `old_scones.nf --bfile test/data/example.map --network gi --snp2gene test/data/snp2gene.tsv --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
+- Sigmod: `sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
 
-```
-dmgwas.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools
-```
+## Epistasis detection
 
-### heinz
+### Network-guided epistasis detection
+<a name="network_epistasis"></a>
 
-```
-heinz.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 --fdr 0.5 -with-docker hclimente/gwas-tools
-```
+We developed a modular method to discover epistasis along the edges of a biological network. This facilitates the interpretability of the results and allows to find interactions that would otherwise be overcome by the multiple test burden. If you use this algorithm, please cite the following article:
 
-### HotNet2
+> Duroux D, Climente-González H, Azencott C-A, Van Steen K (2021) **Interpretable network-guided epistasis detection.** In press. https://doi.org/10.1101/2020.09.24.310136
 
-```
-hotnet2.nf --scores scored_genes.top10.txt --tab2 test/data/interactions.tab2 --hotnet2_path hotnet2 --lfdr_cutoff 0.125 -with-docker hclimente/gwas-tools
-```
-
-### LEAN
+Usage:
 
 ```
-lean.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools
-```
-
-### SConES
-
-```
-old_scones.nf --bfile test/data/example.map --network gi --snp2gene test/data/snp2gene.tsv --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools
-```
-
-### Sigmod
-
-```
-sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools
+network_epistasis.nf --bfile ../test/data/example --tab2 ../test/data/interactions.tab2 --snp2gene ../test/data/snp2gene.tsv --nperm 10
 ```
 
 # Dependencies
