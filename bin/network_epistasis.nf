@@ -1,7 +1,8 @@
 #!/usr/bin/env nextflow
 
-params.out = "."
 params.nperm = 999
+params.out = "."
+params.prs = ''
 
 // gwas
 bed = file("${params.bfile}.bed")
