@@ -29,10 +29,11 @@ process make_snp_models {
 	library(tidyverse)
 	library(data.table)
 
-	snp2gene <- read_tsv("${SNP2GENE}", col_types = "cc")
+	snp2gene <- read_tsv("${SNP2GENE}", col_types = "cc") %>% unique
 	read_tsv("${TAB2}", col_types = cols(.default = col_character())) %>%
 		rename(gene_1 = "Official Symbol Interactor A", gene_2 = "Official Symbol Interactor B") %>%
 		select(gene_1, gene_2) %>%
+        unique %>%
 		data.table %>%
 		merge(snp2gene, by.x = 'gene_1', by.y = 'gene', allow.cartesian = TRUE) %>%
 		merge(snp2gene, by.x = 'gene_2', by.y = 'gene', allow.cartesian = TRUE, suffix = c('_1', '_2')) %>%
