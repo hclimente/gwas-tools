@@ -18,6 +18,7 @@ process make_snp_models {
 
 	input:
 		file TAB2 from tab2 
+		file BIM from bim
 		file SNP2GENE from snp2gene
 
 	output:
@@ -26,11 +27,16 @@ process make_snp_models {
 	"""
 	#!/usr/bin/env Rscript
 
+	library(vroom)
 	library(tidyverse)
 	library(data.table)
 
-	snp2gene <- read_tsv("${SNP2GENE}", col_types = "cc") %>% unique
-	read_tsv("${TAB2}", col_types = cols(.default = col_character())) %>%
+	snps <- vroom("${BIM}", col_names = FALSE)\$X2
+	snp2gene <- vroom("${SNP2GENE}", col_types = "cc") %>%
+		filter(snp %in% snps) %>%
+		unique
+
+	vroom("${TAB2}", col_types = cols(.default = col_character())) %>%
 		rename(gene_1 = "Official Symbol Interactor A", gene_2 = "Official Symbol Interactor B") %>%
 		select(gene_1, gene_2) %>%
         unique %>%
