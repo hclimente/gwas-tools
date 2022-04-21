@@ -3,17 +3,18 @@
 params.out = '.'
 
 // sigmod params
-SIGMOD_PATH = file(params.sigmod)
+SIGMOD_PATH = "SigMod_v2"
 params.lambdamax = 1
 params.nmax = 300
 params.maxjump = 10
 
 // annotation
-VEGAS_OUT = file(params.vegas)
+VEGAS_OUT = file(params.scores)
 TAB2 = file(params.tab2)
 
 process sigmod {
 
+    beforeScript: "wget https://github.com/YuanlongLiu/SigMod/raw/master/SigMod_v2.zip && unzip SigMod_v2.zip"
     publishDir "$params.out", overwrite: true, mode: "copy"
 
     input:

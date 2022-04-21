@@ -5,7 +5,7 @@ params.fdr = 0.1
 
 // annotation
 tab2 = file(params.tab2)
-vegas = file(params.vegas)
+vegas = file(params.scores)
 
 process heinz {
 
