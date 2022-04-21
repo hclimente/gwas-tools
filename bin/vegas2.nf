@@ -72,8 +72,8 @@ if (params.snp_association == ''){
               file 'snp_association' into snp_association
 
           """
-          plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc 
-          awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc  >snp_association
+          plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc --allow-no-sex
+          awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc >snp_association
           """
 
       }
