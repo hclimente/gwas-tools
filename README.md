@@ -15,6 +15,10 @@ export PATH=$PATH:$PWD/gwas-tools/bin
 
 The pipelines are written in [Nextflow](https://www.nextflow.io/), and makes use of multiple tools (see [Dependencies](#dependencies)). These tools need to be installed independently on a per-pipeline basis. However, those that can be distributed are included in a Docker image, which can be used adding the parameter '*-with-docker hclimente/gwas-tools*' or '*-with-singularity hclimente/gwas-tools*'.
 
+## Test files
+
+A partial minimal set of files is available in `test/data` to demonstrate the use of gwas-tools. For the SConES tool to function, the PPI file need to be downloaded and prepared as in `bin/templates/dbs/biogrid.sh`
+
 # Functions
 
 - GWAS
@@ -46,7 +50,7 @@ The available methods are:
 - heinz: `heinz.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 --fdr 0.5 -with-docker hclimente/gwas-tools`
 - HotNet2: `hotnet2.nf --scores scored_genes.top10.txt --tab2 test/data/interactions.tab2 --hotnet2_path hotnet2 --lfdr_cutoff 0.125 -with-docker hclimente/gwas-tools`
 - LEAN: `lean.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
-- SConES: `old_scones.nf --bfile test/data/example.map --network gi --snp2gene test/data/snp2gene.tsv --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
+- SConES: `old_scones.nf --bfile test/data/example --network gi --snp2gene test/data/snp2gene.tsv --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
 - Sigmod: `sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
 
 ## Epistasis detection
