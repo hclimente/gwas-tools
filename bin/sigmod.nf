@@ -3,7 +3,7 @@
 params.out = '.'
 
 // sigmod params
-SIGMOD_PATH = file(params.sigmod)
+// SIGMOD_PATH = file(params.sigmod)
 params.lambdamax = 1
 params.nmax = 300
 params.maxjump = 10
@@ -19,7 +19,7 @@ process sigmod {
     input:
         file VEGAS_OUT
         file TAB2
-        file SIGMOD_PATH
+//        file SIGMOD_PATH
         val LAMBDAMAX from params.lambdamax
         val NMAX from params.nmax
         val MAXJUMP from params.maxjump
