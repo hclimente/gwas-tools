@@ -10,7 +10,7 @@ fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 // SConES parameters
 params.network = 'gs'
 params.score = 'chi2'
-params.criterion = 'consistency'
+params.criterion = 'stability'
 params.encoding = 'additive'
 params.eta = null
 params.lambda = null
