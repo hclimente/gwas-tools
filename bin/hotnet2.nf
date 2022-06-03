@@ -79,6 +79,7 @@ process vegas2hotnet {
 
 }
 
+
 process make_h5_network {
 
     input:
@@ -142,6 +143,7 @@ process hotnet2 {
 --heat_files ${HEAT} \
 --network_permutations ${network_permutations} \
 --heat_permutations ${heat_permutations} \
+--num_cores -1 \ 
 --output_directory .
     """
 
