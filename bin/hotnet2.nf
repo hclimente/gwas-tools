@@ -99,6 +99,7 @@ process make_h5_network {
 --network_name ppin \
 --prefix ppin \
 --beta ${BETA} \
+--cores -1 \
 --num_permutations ${network_permutations} \
 --output_dir .
     """
