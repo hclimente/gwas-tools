@@ -1,13 +1,17 @@
 #!/usr/bin/env nextflow
 
+include { heinz_workflow } from './heinz.nf'
+include { vegas2_workflow } from './vegas2.nf'
+
 params.out = '.'
 params.splits = 5
 
 // gwas
 bed = file("${params.bfile}.bed")
-bim = file("${bed.baseName}.bim")
-fam = file("${bed.baseName}.fam")
+bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
+fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 
+print(bed.baseName)
 algorithms = [
               'dmgwas',
               'heinz',
@@ -32,7 +36,7 @@ process split_data {
         val K
 
     output:
-        file 'samples_*.txt' into splits
+        file 'samples_*.txt'
 
     script:
     template 'genotypes/train_test_split.sh'
@@ -41,11 +45,8 @@ process split_data {
 
 process vegas {
 
-    memory '40 GB'
-    executor 'slurm'
-
     input:
-        tuple file(BED), file(FAM), file(BIM)
+        tuple path(BED), path(FAM), path(BIM)
         each SAMPLES
 
     output:
@@ -101,12 +102,11 @@ process build_consensus {
 }
 
 workflow {
-    take: data
     main:
         split_data(fam, 1..params.splits, params.splits)
-        vegas((bed, fam, bim), split_data.out)
-        network_selection(methods, vegas.out)
-        build_consensus(network_selection.out.collectFile)
+        vegas(tuple(bed, fam, bim), split_data.out)
+        // heinz_workflow(vegas.out, tab2, 0.1)
+        // build_consensus(network_selection.out.collectFile)
     emit:
-        build_consensus.out
+        split_data.out
 }
