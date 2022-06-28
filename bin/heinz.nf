@@ -2,19 +2,16 @@
 
 params.out = '.'
 params.fdr = 0.1
-
-// annotation
-tab2 = file(params.tab2)
-vegas = file(params.scores)
+nextflow.enable.dsl=2
 
 process heinz {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
+    // publishDir "$params.out", overwrite: true, mode: "copy"
 
     input:
-        file VEGAS from vegas
-        file TAB2 from tab2
-        val FDR from params.fdr
+        file VEGAS
+        file TAB2
+        val FDR
 
     output:
         file 'selected_genes.heinz.txt' 
@@ -50,4 +47,22 @@ process heinz {
     }
     """
 
+}
+
+workflow heinz_workflow {
+    take:
+        scores
+        tab2
+        fdr
+    main:
+        heinz(scores, tab2, fdr)
+    emit:
+        heinz.out
+}
+
+workflow {
+    main:
+        heinz_workflow(file(params.scores), file(params.tab2), params.fdr)
+    emit:
+        heinz_workflow.out
 }
