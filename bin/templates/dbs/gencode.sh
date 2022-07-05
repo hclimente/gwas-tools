@@ -13,5 +13,5 @@ else
     tag2=''
 fi
 
-wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_${GENCODE_VERSION}\$tag1/gencode.v${GENCODE_VERSION}\${tag2}.annotation.gff3.gz
+wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_${GENCODE_VERSION}\$tag1/gencode.v${GENCODE_VERSION}\${tag2}.annotation.gff3.gz
 gunzip -c *gff3.gz >gff3
