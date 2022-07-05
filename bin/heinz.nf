@@ -6,10 +6,8 @@ nextflow.enable.dsl=2
 
 process heinz {
 
-    // publishDir "$params.out", overwrite: true, mode: "copy"
-
     input:
-        file VEGAS
+        file SCORES
         file TAB2
         val FDR
 
@@ -23,7 +21,7 @@ process heinz {
     library(igraph)
     library(BioNet)
 
-    vegas <- read_tsv('${VEGAS}')
+    vegas <- read_tsv('${SCORES}')
     net <- read_tsv("${TAB2}") %>%
         rename(gene1 = `Official Symbol Interactor A`, 
                gene2 = `Official Symbol Interactor B`) %>%
@@ -49,7 +47,7 @@ process heinz {
 
 }
 
-workflow heinz_workflow {
+workflow heinz_nf {
     take:
         scores
         tab2
@@ -62,7 +60,7 @@ workflow heinz_workflow {
 
 workflow {
     main:
-        heinz_workflow(file(params.scores), file(params.tab2), params.fdr)
+        heinz_nf(file(params.scores), file(params.tab2), params.fdr)
     emit:
-        heinz_workflow.out
+        heinz_nf.out
 }
