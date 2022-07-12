@@ -19,7 +19,7 @@ RUN R -e "BiocManager::install(c('martini','BioNet','twilight'))"
 RUN wget https://github.com/bedops/bedops/releases/download/v2.4.35/bedops_linux_x86_64-v2.4.35.tar.bz2 \
     && tar jxvf bedops_linux_x86_64-v2.4.35.tar.bz2 \
     && cp bin/* .
-RUN wget https://github.com/YuanlongLiu/SigMod/raw/master/SigMod_v2.zip \
+RUN wget https://github.com/YuanlongLiu/SigMod/blob/20c561876d87a0faca632a6b93882fcffd719b17/SigMod_v2.zip \
     && unzip SigMod_v2.zip
 RUN wget https://github.com/raphael-group/hotnet2/archive/refs/tags/v1.2.1.tar.gz \
     && tar xzf v1.2.1.tar.gz \
