@@ -4,7 +4,7 @@ library(tidyverse)
 
 # load sigmod
 require(igraph)
-scripts <- list.files('/gwas-tools/SigMod_v2/R', pattern='*.R\$', full.names=TRUE, ignore.case=TRUE)
+scripts <- list.files('${SIGMOD_PATH}/R', pattern='*.R\$', full.names=TRUE, ignore.case=TRUE)
 sapply(scripts, source, .GlobalEnv)
 
 # read network
