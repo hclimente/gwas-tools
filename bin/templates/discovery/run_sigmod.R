@@ -1,11 +1,7 @@
 #!/usr/bin/env Rscript
 
+library(SigMod)
 library(tidyverse)
-
-# load sigmod
-require(igraph)
-scripts <- list.files('${SIGMOD_PATH}/R', pattern='*.R\$', full.names=TRUE, ignore.case=TRUE)
-sapply(scripts, source, .GlobalEnv)
 
 # read network
 net <- read_tsv("${TAB2}") %>%
@@ -16,7 +12,7 @@ rename(Interactor_A = `Official Symbol Interactor A`,
     as.data.frame
 
 # read vegas output
-scores <- read_tsv('${VEGAS_OUT}') %>% 
+scores <- read_tsv('${SCORES}') %>% 
     rename(gene = Gene, p = Pvalue) %>%
     select(gene, p) %>%
     as.data.frame

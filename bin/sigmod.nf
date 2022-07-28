@@ -1,33 +1,44 @@
 #!/usr/bin/env nextflow
 
-params.out = '.'
-
 // sigmod params
-SIGMOD_PATH = "SigMod_v2"
 params.lambdamax = 1
 params.nmax = 300
 params.maxjump = 10
 
-// annotation
-VEGAS_OUT = file(params.scores)
-TAB2 = file(params.tab2)
-
 process sigmod {
 
-    beforeScript: "wget https://github.com/YuanlongLiu/SigMod/raw/master/SigMod_v2.zip && unzip SigMod_v2.zip"
-    publishDir "$params.out", overwrite: true, mode: "copy"
-
     input:
-        file VEGAS_OUT
+        file SCORES
         file TAB2
-        file SIGMOD_PATH
-        val LAMBDAMAX from params.lambdamax
-        val NMAX from params.nmax
-        val MAXJUMP from params.maxjump
+        val LAMBDAMAX
+        val NMAX
+        val MAXJUMP
 
     output:
         file 'selected_genes.sigmod.txt'
 
     script:
     template 'discovery/run_sigmod.R'
+
+}
+
+
+workflow sigmod_nf {
+    take:
+        scores
+        tab2
+        lambdamax
+        nmax
+        maxjump
+    main:
+        sigmod(scores, tab2, lambdamax, nmax, maxjump)
+    emit:
+        sigmod.out
+}
+
+workflow {
+    main:
+        sigmod_nf(file(params.scores), file(params.tab2), params.lambdamax, params.nmax, params.maxjump)
+    emit:
+        sigmod_nf.out
 }
