@@ -18,7 +18,7 @@ process sigmod {
         file 'selected_genes.sigmod.txt'
 
     script:
-    template 'discovery/run_sigmod.R'
+    template 'discovery/sigmod.R'
 
 }
 
