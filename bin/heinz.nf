@@ -2,9 +2,10 @@
 
 params.out = '.'
 params.fdr = 0.1
-nextflow.enable.dsl=2
 
 process heinz {
+
+    tag { SCORES.getBaseName() }
 
     input:
         file SCORES

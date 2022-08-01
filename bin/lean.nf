@@ -1,18 +1,12 @@
 #!/usr/bin/env nextflow
 
-params.out = '.'
-
-// annotation
-VEGAS_OUT = file(params.vegas)
-TAB2 = file(params.tab2)
-
 process tab22igraph {
 
     input:
-        file TAB2
+        path TAB2
     
     output:
-        file 'net.RData' into RNET
+        path 'net.RData'
 
     script:
     template 'io/tab22igraph.R'
@@ -21,11 +15,13 @@ process tab22igraph {
 
 process read_vegas {
 
+    tag { VEGAS_OUT.getBaseName() }
+
     input:
-        file VEGAS_OUT
+        path VEGAS_OUT
 
     output:
-        file 'scores.RData' into RSCORES
+        path "${VEGAS_OUT.getBaseName()}.RData"
 
     """
     #!/usr/bin/env Rscript
@@ -37,22 +33,41 @@ process read_vegas {
     scores <- vegas_out[['Pvalue']]
     names(scores) <- vegas_out[['Gene']]
 
-    save(scores, file = 'scores.RData')
+    save(scores, file = "${VEGAS_OUT.getBaseName()}.RData")
     """
 
 }
 
 process lean {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
+    tag { RSCORES.getBaseName() }
 
     input:
-        file RSCORES
-        file RNET
+        path RSCORES
+        path RNET
 
     output:
-        file 'scored_genes.lean.txt'
+        path 'scored_genes.lean.txt'
 
     script:
     template 'discovery/run_leanr.R'
+}
+
+workflow lean_nf {
+    take:
+        scores
+        tab2
+    main:
+        read_vegas(scores)
+        tab22igraph(tab2)
+        lean(read_vegas.out, tab22igraph.out)
+    emit:
+        lean.out
+}
+
+workflow {
+    main:
+        lean_nf(file(params.scores), file(params.tab2))
+    emit:
+        lean_nf.out
 }

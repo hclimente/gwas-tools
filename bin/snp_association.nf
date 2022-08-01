@@ -1,7 +1,5 @@
 #!/usr/bin/env nextflow
 
-nextflow.enable.dsl = 2
-
 bed = file("${params.bfile}.bed")
 bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
 fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
@@ -10,32 +8,36 @@ bfile = tuple(bed, bim, fam)
 params.covars = ''
 
 process chisquare_test {
+    
+    tag { BED.getBaseName() }
 
     input:
         tuple file(BED), file(BIM), file(FAM)
 
     output:
-        file 'snp_association.tsv'
+        path "${BED.getBaseName()}.chisq"
     
     """
     plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc --allow-no-sex
-    awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc >snp_association.tsv
+    awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc >${BED.getBaseName()}.chisq
     """
 
 }
 
 process adjusted_logistic_regression {
 
+    tag { BED.getBaseName() }
+
     input:
         tuple file(BED), file(BIM), file(FAM)
         file COVARS
 
     output:
-        file 'snp_association.tsv'
+        path "${BED.getBaseName()}.logreg"
     
     """
     plink --bed ${BED} --bim ${BIM} --fam ${FAM} --logistic --covar ${COVAR}
-    awk 'NR > 1 && \$5 == "ADD" && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc.logistic >snp_association.tsv
+    awk 'NR > 1 && \$5 == "ADD" && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc.logistic >${BED.getBaseName()}.logreg
     """
 
 }
