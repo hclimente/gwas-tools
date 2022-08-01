@@ -1,7 +1,10 @@
 #!/usr/bin/env Rscript
 
-library(SigMod)
+require(igraph)
 library(tidyverse)
+
+scripts <- list.files('${SIGMOD_PATH}/R', pattern='*.R\$', full.names=TRUE, ignore.case=TRUE)
+sapply(scripts, source, .GlobalEnv)
 
 # read network
 net <- read_tsv("${TAB2}") %>%

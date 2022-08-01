@@ -41,9 +41,12 @@ params.fdr = 0.1
 hotnet2_path = file('../hotnet2/hotnet2')
 
 // sigmod
-params.lambdamax = 1
-params.nmax = 300
-params.maxjump = 10
+/* params.lambdamax = 1 */
+/* params.nmax = 300 */
+/* params.maxjump = 10 */
+params.lambdamax = 2
+params.nmax = 1
+params.maxjump = 1
 
 // Pipeline
 //////////////////////////////////////////////
@@ -92,10 +95,10 @@ workflow {
         gene_assoc(snp_assoc.out, bfile_controls, params.gencode, params.genome, params.buffer, '')
         heinz(gene_assoc.out, tab2, params.fdr)
         lean(gene_assoc.out, tab2)
-        // sigmod(gene_assoc.out, tab2, params.lambdamax, params.nmax, params.maxjump)
+        sigmod(gene_assoc.out, tab2, params.lambdamax, params.nmax, params.maxjump)
 
         outputs = heinz.out
-            .mix(lean.out)
+            .mix(lean.out, sigmod.out)
             .collect()
         build_consensus(outputs)
     emit:

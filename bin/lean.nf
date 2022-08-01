@@ -1,50 +1,12 @@
 #!/usr/bin/env nextflow
 
-process tab22igraph {
-
-    input:
-        path TAB2
-    
-    output:
-        path 'net.RData'
-
-    script:
-    template 'io/tab22igraph.R'
-
-}
-
-process read_vegas {
-
-    tag { VEGAS_OUT.getBaseName() }
-
-    input:
-        path VEGAS_OUT
-
-    output:
-        path "${VEGAS_OUT.getBaseName()}.RData"
-
-    """
-    #!/usr/bin/env Rscript
-
-    library(tidyverse)
-
-    vegas_out <- read_tsv('$VEGAS_OUT')
-
-    scores <- vegas_out[['Pvalue']]
-    names(scores) <- vegas_out[['Gene']]
-
-    save(scores, file = "${VEGAS_OUT.getBaseName()}.RData")
-    """
-
-}
-
 process lean {
 
-    tag { RSCORES.getBaseName() }
+    tag { SCORES.getBaseName() }
 
     input:
-        path RSCORES
-        path RNET
+        path SCORES
+        path TAB2
 
     output:
         path 'scored_genes.lean.txt'
@@ -58,9 +20,7 @@ workflow lean_nf {
         scores
         tab2
     main:
-        read_vegas(scores)
-        tab22igraph(tab2)
-        lean(read_vegas.out, tab22igraph.out)
+        lean(scores, tab2)
     emit:
         lean.out
 }

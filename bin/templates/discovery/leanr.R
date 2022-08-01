@@ -1,12 +1,21 @@
 #!/usr/bin/env Rscript
+library(igraph)
 library(LEANR)
 library(tidyverse)
 
-load("${RSCORES}")
-load("${RNET}")
+# read tab2 file
+net <- read_tsv("${TAB2}") %>%
+    select(`Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
+    graph_from_data_frame(directed = FALSE)
 
-scores <- scores[names(scores) %in% names(V(net))]
+# read gene scores
+gene_scores <- read_tsv('$SCORES') %>%
+    filter(Gene %in% names(V(net)))
 
+scores <- gene_scores[['Pvalue']]
+names(scores) <- gene_scores[['Gene']]
+
+# run lean
 results <- run.lean(scores, net, n_reps = 10000, 
                     add.scored.genes = TRUE, verbose = TRUE)
 
