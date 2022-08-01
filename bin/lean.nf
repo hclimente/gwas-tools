@@ -50,7 +50,7 @@ process lean {
         path 'scored_genes.lean.txt'
 
     script:
-    template 'discovery/run_leanr.R'
+    template 'discovery/leanr.R'
 }
 
 workflow lean_nf {
