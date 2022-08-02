@@ -1,10 +1,9 @@
 #!/usr/bin/env nextflow
 
+include { get_bfile } from './templates/utils.nf'
+
 // gwas
-bed = file("${params.bfile}.bed")
-bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
-fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
-bfile = tuple(bed, bim, fam)
+bfile = get_bfile(params.bfile)
 
 // SConES parameters
 params.network = 'gs'
@@ -12,17 +11,16 @@ params.score = 'chi2'
 params.criterion = 'consistency'
 params.encoding = 'additive'
 
-// additional files
-snp2gene = (params.network == 'gm' | params.network == 'gi') ? file(params.snp2gene) : file('NO_SNP2GENE')
-tab2 = (params.network == 'gi') ? file(params.tab2) : file('NO_TAB2')
+process read_bfile {
 
-process bed2r {
+    tag { BED.getBaseName() }
+    afterScript "mv gwas.RData ${BED.getBaseName()}.Rdata"
 
     input:
         tuple path(BED), path(BIM), path(FAM)
 
     output:
-        path 'gwas.RData'
+        path "${BED.getBaseName()}.Rdata"
 
     script:
     template 'io/bed2r.R'
@@ -31,11 +29,13 @@ process bed2r {
 
 process create_snp_network {
 
+    tag { RGWAS.getBaseName() }
+
     input:
-        file TAB2
+        path TAB2
         val NET
-        file SNP2GENE
-        file RGWAS
+        path SNP2GENE
+        path RGWAS
 
     output:
         path 'net.RData'
@@ -72,14 +72,16 @@ process create_snp_network {
 
 process scones {
 
+    tag { RGWAS.getBaseName() }
+
     input:
-        file RGWAS
-        file RNET
+        path RGWAS
+        path RNET
         val SCORE
         val CRITERION
 
     output:
-        file 'cones.tsv'
+        path 'cones.tsv'
 
     script:
     template 'discovery/scones.R'
@@ -90,13 +92,16 @@ workflow scones_nf {
     take:
         bfile
         tab2
-        network_type
+        network
         snp2gene
         score
         criterion
     main:
+        snp2gene = (network == 'gm' | network == 'gi') ? file(snp2gene) : file('NO_SNP2GENE')
+        tab2 = (network == 'gi') ? file(tab2) : file('NO_TAB2')
+
         bed2r(bfile)
-        make_snp_network(tab2, network_type, snp2gene, bed2r.out)
+        make_snp_network(tab2, network, snp2gene, bed2r.out)
         scones(bed2r.out, make_snp_network.out, score, criterion)
     emit:
         scones.out
@@ -104,7 +109,7 @@ workflow scones_nf {
 
 workflow {
     main:
-        scones_nf(bfile, file(params.tab2), params.network, snp2gene, params.score, params.criterion)
+        scones_nf(bfile, params.tab2, params.network, snp2gene, params.score, params.criterion)
     emit:
         scones_nf.out
 }

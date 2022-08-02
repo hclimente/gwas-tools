@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 
-bed = file("${params.bfile}.bed")
-bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
-fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
-bfile = tuple(bed, bim, fam)
+include { get_bfile } from './templates/utils.nf'
+
+// gwas
+bfile = get_bfile(params.bfile)
 
 params.covars = ''
 
@@ -29,7 +29,7 @@ process adjusted_logistic_regression {
     tag { BED.getBaseName() }
 
     input:
-        tuple file(BED), file(BIM), file(FAM)
+        tuple path(BED), path(BIM), path(FAM)
         file COVARS
 
     output:

@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+include { get_bfile } from './templates/utils.nf'
+
 params.gencode = 28
 params.genome = '38'
 params.vegas_params = ''
@@ -8,10 +10,7 @@ params.snp_association = ''
 params.ld_controls = ''
 params.buffer = 0
 
-bed_controls = file("${params.bfile_controls}.bed")
-bim_controls = file("${bed_controls.getParent()}/${bed_controls.getBaseName()}.bim")
-fam_controls = file("${bed_controls.getParent()}/${bed_controls.getBaseName()}.fam")
-bfile_controls = tuple(bed_controls, bim_controls, fam_controls)
+bfile_controls = get_bfile(params.bfile_controls)
 
 // Create GLIST
 //////////////////////////////////////////////
