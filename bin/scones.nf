@@ -82,7 +82,7 @@ process scones {
         file 'cones.tsv'
 
     script:
-    template 'discovery/run_scones.R'
+    template 'discovery/scones.R'
 
 }
 
