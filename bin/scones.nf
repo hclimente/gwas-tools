@@ -27,7 +27,7 @@ process read_bfile {
 
 }
 
-process create_snp_network {
+process make_snp_network {
 
     tag { RGWAS.getBaseName() }
 
@@ -100,9 +100,9 @@ workflow scones_nf {
         snp2gene = (network == 'gm' | network == 'gi') ? file(snp2gene) : file('NO_SNP2GENE')
         tab2 = (network == 'gi') ? file(tab2) : file('NO_TAB2')
 
-        bed2r(bfile)
-        make_snp_network(tab2, network, snp2gene, bed2r.out)
-        scones(bed2r.out, make_snp_network.out, score, criterion)
+        read_bfile(bfile)
+        make_snp_network(tab2, network, snp2gene, read_bfile.out)
+        scones(read_bfile.out, make_snp_network.out, score, criterion)
     emit:
         scones.out
 }

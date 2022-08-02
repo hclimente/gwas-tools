@@ -41,7 +41,7 @@ params.fdr = 0.1
 hotnet2_path = file('../hotnet2/hotnet2')
 
 // scones
-params.scones_criterion = 'consistency'
+params.scones_criterion = 'stability'
 params.scones_network = 'gs'
 params.scones_score = 'chi2'
 
@@ -71,25 +71,52 @@ process split_data {
 
 }
 
+process scones_genes {
+
+    tag { SCONES_OUT.getBaseName() }
+
+    input:
+        path SCONES_OUT
+        path SNP2GENE
+
+    output:
+        path "${SCONES_OUT.getBaseName()}.genes.tsv"
+
+    """
+    #!/usr/bin/env Rscript
+
+    library(tidyverse)
+
+    snp2gene <- read_tsv("${SNP2GENE}")
+
+    read_tsv("${SCONES_OUT}", col_types = "c") %>%
+        inner_join(snp2gene, by = "snp") %>%
+        select(gene) %>%
+        unique %>%
+        write_tsv("${SCONES_OUT.getBaseName()}.genes.tsv")
+    """
+
+}
+
 process build_consensus {
 
     input:
-        file "selected_*.txt"
+        path "selected_*.txt"
 
     output:
-        file "stable_consensus.tsv"
+        path "stable_consensus.tsv"
 
     """
-#!/usr/bin/env Rscript
+    #!/usr/bin/env Rscript
 
-library(tidyverse)
+    library(tidyverse)
 
-list.files(pattern="selected_") %>%
-    lapply(read_tsv) %>%
-    bind_rows %>%
-    group_by(gene) %>%
-    summarize(n = n()) %>%
-    write_tsv("stable_consensus.tsv")
+    list.files(pattern="selected_") %>%
+        lapply(read_tsv) %>%
+        bind_rows %>%
+        group_by(gene) %>%
+        summarize(n = n()) %>%
+        write_tsv("stable_consensus.tsv")
     """
 
 }
@@ -102,15 +129,15 @@ workflow {
         /* dmgwas(gene_assoc.out, tab2, params.d, params.r) */
         heinz(gene_assoc.out, tab2, params.fdr)
         lean(gene_assoc.out, tab2)
-        /* scones(bfile, tab2, params.scones_network, params.snp2gene, params.snp2gene, params.scones_score, params.scones_criterion) */
-        /* map_scones_to_gene(scones.out) */
+        /* scones(split_data.out, tab2, params.scones_network, params.snp2gene, params.scones_score, params.scones_criterion) */
+        /* scones_genes(scones.out, snp2gene) */
         sigmod(gene_assoc.out, tab2, params.lambdamax, params.nmax, params.maxjump)
 
         /* outputs = dmgwas.out */
         /*     .mix(heinz.out, lean.out, sigmod.out) */
         /*     .collect() */
         outputs = heinz.out
-            .mix(lean.out, sigmod.out)
+            .mix(lean.out, sigmod.out) //, scones_genes.out)
             .collect()
         build_consensus(outputs)
     emit:

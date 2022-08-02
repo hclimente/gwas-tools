@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+library(igraph)
 library(martini)
 library(tidyverse)
 
@@ -7,14 +8,13 @@ load("${RNET}")
 
 # make a exploratory run to get the best parameters
 params <- capture.output(
-    cones <- scones.cv(gwas, net, score = "${SCORE}",
-                        criterion = "${CRITERION}")
-                        )
+    scones.cv(gwas, net, score = "${SCORE}", criterion = "${CRITERION}"),
+    type = "message")
 
 cat(params)
 
 params <- tail(params, n = 2) %>% 
-  lapply(strsplit, ' = ') %>% 
+  lapply(strsplit, ' =') %>% 
   unlist %>% .[c(F,T)] %>% 
   as.numeric() %>% 
   log10
@@ -28,4 +28,6 @@ cones <- scones.cv(gwas, net,
                    criterion = "${CRITERION}",
                    etas = etas,
                    lambdas = lambdas)
-write_tsv(cones, 'cones.tsv')
+
+tibble(snp = V(cones)) %>%
+    write_tsv('cones.tsv')
