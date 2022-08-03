@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { read_bfile, make_snp_network } from './scones.nf'
+include { read_bfile; make_snp_network } from './scones.nf'
 include { get_bfile } from './templates/utils.nf'
 
 // gwas

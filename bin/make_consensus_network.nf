@@ -3,7 +3,7 @@
 include { dmgwas_nf as dmgwas } from './dmgwas.nf'
 include { heinz_nf as heinz } from './heinz.nf'
 include { lean_nf as lean } from './lean.nf'
-include { scones_nf as scones } from './scones.nf'
+include { scones_old_nf as scones } from './scones_old.nf'
 include { sigmod_nf as sigmod } from './sigmod.nf'
 include { snp_association_nf as snp_assoc } from './snp_association.nf'
 include { vegas2_nf as gene_assoc } from './vegas2.nf'
@@ -41,7 +41,7 @@ params.fdr = 0.1
 hotnet2_path = file('../hotnet2/hotnet2')
 
 // scones
-params.scones_criterion = 'stability'
+params.scones_criterion = 'consistency'
 params.scones_network = 'gs'
 params.scones_score = 'chi2'
 
@@ -129,15 +129,15 @@ workflow {
         /* dmgwas(gene_assoc.out, tab2, params.d, params.r) */
         heinz(gene_assoc.out, tab2, params.fdr)
         lean(gene_assoc.out, tab2)
-        /* scones(split_data.out, tab2, params.scones_network, params.snp2gene, params.scones_score, params.scones_criterion) */
-        /* scones_genes(scones.out, snp2gene) */
+        scones(split_data.out, tab2, params.scones_network, params.snp2gene, params.scones_score, params.scones_criterion, null, null)
+        scones_genes(scones.out, snp2gene)
         sigmod(gene_assoc.out, tab2, params.lambdamax, params.nmax, params.maxjump)
 
         /* outputs = dmgwas.out */
         /*     .mix(heinz.out, lean.out, sigmod.out) */
         /*     .collect() */
         outputs = heinz.out
-            .mix(lean.out, sigmod.out) //, scones_genes.out)
+            .mix(lean.out, sigmod.out, scones_genes.out)
             .collect()
         build_consensus(outputs)
     emit:
