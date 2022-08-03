@@ -15,17 +15,18 @@ dependencies:
   - bioconductor-bionet
   - bioconductor-martini
   - r
-  - r-mvtnorm
-  - r-corpcor
-  - r-tidyverse
-  - r-magrittr
-  - r-ranger
-  - r-SKAT
   - r-biglasso
   - r-bigmemory
+  - r-biocmanager
+  - r-CASMAP
+  - r-corpcor
   - r-igraph
   - r-LEANR
-  - r-CASMAP
+  - r-magrittr
+  - r-mvtnorm
+  - r-ranger
+  - r-SKAT
+  - r-tidyverse
   # software
   - gawk
   - sed
