@@ -17,4 +17,4 @@ search_cones(gwas,
              etas = c(${ETA}),
              lambdas = c(${LAMBDA})) %>%
     filter(selected) %>%
-    write_tsv('cones.tsv')
+    write_tsv('${RGWAS.getBaseName()}.scones.tsv')

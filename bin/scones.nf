@@ -83,7 +83,7 @@ process scones {
         val CRITERION
 
     output:
-        path 'cones.tsv'
+        path "${RGWAS.getBaseName()}.scones.tsv"
 
     script:
     template 'discovery/scones.R'
@@ -101,7 +101,7 @@ process scones_old {
         val CRITERION
 
     output:
-        path 'cones.tsv'
+        path "${RGWAS.getBaseName()}.scones.tsv"
 
     script:
     template 'discovery/scones_old.R'
@@ -121,7 +121,7 @@ process parametrized_scones_old {
         val LAMBDA
 
     output:
-        path 'cones.tsv'
+        path "${RGWAS.getBaseName()}.scones.tsv"
 
     script:
     template 'discovery/scones_params_old.R'

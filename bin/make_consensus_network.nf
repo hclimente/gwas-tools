@@ -5,19 +5,19 @@ include { heinz_nf as heinz } from './heinz.nf'
 include { lean_nf as lean } from './lean.nf'
 include { scones_old_nf as scones } from './scones.nf'
 include { sigmod_nf as sigmod } from './sigmod.nf'
+include { snp2gene_nf as snp2gene } from './snp2gene.nf'
 include { snp_association_nf as snp_assoc } from './snp_association.nf'
 include { vegas2_nf as gene_assoc } from './vegas2.nf'
 include { get_bfile } from './templates/utils.nf'
 
 // Parameters
-//////////////////////////////////////////////
-// splits
+/// splits
 params.splits = 5
 
-// snp association
+/// snp association
 bfile = get_bfile(params.bfile)
 
-// vegas2
+/// vegas2
 params.gencode = 28
 params.genome = '38'
 params.covars = ''
@@ -26,26 +26,25 @@ params.buffer = 0
 
 bfile_controls = get_bfile(params.bfile_controls)
 
-// network selection
+/// network selection
 tab2 = file(params.tab2)
-snp2gene = file(params.snp2gene)
 
-// dmgwas
+//// dmgwas
 params.r = 0.1
 params.d = 2
 
-// heinz
+//// heinz
 params.fdr = 0.1
 
-// hotnet2
+//// hotnet2
 hotnet2_path = file('../hotnet2/hotnet2')
 
-// scones
+//// scones
 params.scones_criterion = 'consistency'
 params.scones_network = 'gs'
 params.scones_score = 'chi2'
 
-// sigmod
+//// sigmod
 // TODO remove
 /* params.lambdamax = 1 */
 /* params.nmax = 300 */
@@ -54,8 +53,6 @@ params.lambdamax = 2
 params.nmax = 1
 params.maxjump = 1
 
-// Pipeline
-//////////////////////////////////////////////
 process split_data {
 
     input:
@@ -98,10 +95,36 @@ process scones_genes {
 
 }
 
+process standardize_outputs {
+
+    input:
+        path OUT
+
+    output:
+        path "standardized.tsv"
+
+    """
+    #!/usr/bin/env Rscript
+
+    library(tidyverse)
+    library(tools)
+
+    ext <- file_ext("${OUT}")
+
+    read_tsv("${OUT}") %>%
+        mutate(.,
+               gene = ifelse("gene" %in% colnames(.), gene, Gene),
+               method = sub(paste0('.', ext), '', '${OUT}'),
+               method = sub('[^.]+.', '', method)) %>%
+        select(gene, method) %>%
+        write_tsv('standardized.tsv')
+    """
+}
+
 process build_consensus {
 
     input:
-        path "selected_*.txt"
+        path "genes_*"
 
     output:
         path "stable_consensus.tsv"
@@ -111,11 +134,13 @@ process build_consensus {
 
     library(tidyverse)
 
-    list.files(pattern="selected_") %>%
+    list.files(pattern="genes_") %>%
         lapply(read_tsv) %>%
         bind_rows %>%
         group_by(gene) %>%
-        summarize(n_selected = n()) %>%
+        summarize(n_selected = n(),
+                  methods = unique(method) %>% paste(collapse = ',')) %>%
+        arrange(-n_selected) %>%
         write_tsv("stable_consensus.tsv")
     """
 
@@ -126,11 +151,12 @@ workflow {
         split_data(bfile, 1..params.splits, params.splits)
         snp_assoc(split_data.out, params.covars)
         gene_assoc(snp_assoc.out, bfile_controls, params.gencode, params.genome, params.buffer, '')
+        snp2gene(bfile[1], params.gencode, params.genome, params.buffer)
         /* dmgwas(gene_assoc.out, tab2, params.d, params.r) */
         heinz(gene_assoc.out, tab2, params.fdr)
         lean(gene_assoc.out, tab2)
-        scones(split_data.out, tab2, params.scones_network, params.snp2gene, params.scones_score, params.scones_criterion, null, null)
-        scones_genes(scones.out, snp2gene)
+        scones(split_data.out, tab2, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
+        scones_genes(scones.out, snp2gene.out)
         sigmod(gene_assoc.out, tab2, params.lambdamax, params.nmax, params.maxjump)
 
         /* outputs = dmgwas.out */
@@ -138,8 +164,8 @@ workflow {
         /*     .collect() */
         outputs = heinz.out
             .mix(lean.out, sigmod.out, scones_genes.out)
-            .collect()
-        build_consensus(outputs)
+        standardize_outputs(outputs)
+        build_consensus(standardize_outputs.out.collect())
     emit:
-        build_consensus.out
+        build_consensus.out.collectFile(name: 'stable_consensus.tsv', storeDir: '.')
 }

@@ -79,7 +79,6 @@ process vegas2hotnet {
 
 }
 
-
 process make_h5_network {
 
     input:

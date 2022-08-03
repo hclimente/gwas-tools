@@ -30,4 +30,4 @@ cones <- scones.cv(gwas, net,
                    lambdas = lambdas)
 
 tibble(snp = V(cones)) %>%
-    write_tsv('cones.tsv')
+    write_tsv('${RGWAS.getBaseName()}.scones.tsv')

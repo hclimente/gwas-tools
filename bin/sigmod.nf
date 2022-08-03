@@ -35,7 +35,6 @@ process sigmod {
 
 }
 
-
 workflow sigmod_nf {
     take:
         scores

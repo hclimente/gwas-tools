@@ -1,8 +1,8 @@
 FROM continuumio/miniconda3
 
 # setup conda virtual environment
-COPY environment.yml .
 RUN conda install mamba -n base -c conda-forge
+COPY environment.yml .
 RUN mamba env update -n base -f environment.yml
 
 # additional software

@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include { download_hgnc; download_gencode } from './snp2gene.nf'
 include { get_bfile } from './templates/utils.nf'
 
 params.gencode = 28
@@ -11,22 +12,6 @@ params.ld_controls = ''
 params.buffer = 0
 
 bfile_controls = get_bfile(params.bfile_controls)
-
-// Create GLIST
-//////////////////////////////////////////////
-process download_gencode {
-
-    input:
-        val GENCODE_VERSION
-        val GRCH_VERSION
-
-    output:
-        path 'gff3'
-    
-    script:
-    template 'dbs/gencode.sh'
-
-}
 
 process compute_gene_coords {
 
@@ -49,8 +34,6 @@ process compute_gene_coords {
 
 }
 
-// Vegas2
-//////////////////////////////////////////////
 process vegas2 {
 
     tag { "${SNP_ASSOC}, chr ${CHR}" }
@@ -79,13 +62,26 @@ process merge_chromosomes {
 
     input:
         tuple val(KEY), path('chr_*')
+		path HGNC
 
     output:
         path "${KEY}.vegas2.tsv"
 
     """
-    head -n1 chr_1 >${KEY}.vegas2.tsv
-    tail -n +2 -q chr_* | sort -n >>${KEY}.vegas2.tsv
+	#!/usr/bin/env Rscript
+
+    library(tidyverse)
+
+	ensembl2hgnc <- read_tsv('$HGNC') %>%
+		select(symbol, ensembl_gene_id)
+
+    list.files(pattern="chr_") %>%
+        lapply(read_tsv) %>%
+        bind_rows %>%
+        inner_join(ensembl2hgnc, by = c("Gene" = "ensembl_gene_id")) %>%
+        mutate(Gene = symbol) %>%
+        select(-symbol) %>%
+        write_tsv('${KEY}.vegas2.tsv')
     """
 
 }
@@ -111,7 +107,9 @@ workflow vegas2_nf {
 
         vegas_outputs = vegas2.out
             .groupTuple()
-        merge_chromosomes(vegas_outputs)
+
+        download_hgnc()
+        merge_chromosomes(vegas_outputs, download_hgnc.out)
     emit:
         merge_chromosomes.out
 }

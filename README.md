@@ -46,7 +46,7 @@ The available methods are:
 - heinz: `heinz.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 --fdr 0.5 -with-docker hclimente/gwas-tools`
 - HotNet2: `hotnet2.nf --scores scored_genes.top10.txt --tab2 test/data/interactions.tab2 --hotnet2_path hotnet2 --lfdr_cutoff 0.125 -with-docker hclimente/gwas-tools`
 - LEAN: `lean.nf --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
-- SConES: `old_scones.nf --bfile test/data/example --network gi --snp2gene test/data/snp2gene.tsv --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
+- SConES: `scones.nf --bfile test/data/example --network gi --snp2gene test/data/snp2gene.tsv --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
 - Sigmod: `sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --tab2 test/data/interactions.tab2 -with-docker hclimente/gwas-tools`
 
 ## Epistasis detection

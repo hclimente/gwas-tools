@@ -1,8 +1,5 @@
 #!/usr/bin/env nextflow
 
-params.out = '.'
-
-bim = file(params.bim)
 params.gencode_version = 28
 params.grch_version = '38'
 params.buffer = 50000
@@ -10,52 +7,39 @@ params.buffer = 50000
 process download_hgnc {
 
     output:
-        file 'non_alt_loci_set.txt' into hgnc
+        path 'non_alt_loci_set.txt'
 
     script:
     template 'dbs/hgnc.sh'
     
 }
 
-process download_annotation {
+process download_gencode {
 
     input:
-        val GENCODE_VERSION from params.gencode_version
-        val GRCH_VERSION from params.grch_version
+        val GENCODE_VERSION
+        val GRCH_VERSION
 
     output:
-        file 'gff3' into gff
+        path 'gff3'
     
     script:
     template 'dbs/gencode.sh'
 
 }
 
-process extract_genes {
-
-	input:
-		file gff
-
-	output:
-		file 'genes.gff' into genes_gff
-
-	"""
-	awk '\$3 == "gene"' $gff >genes.gff
-	"""
-
-}
-
 process gff2bed {
 
 	input:
-		file genes_gff
-		val BUFFER from params.buffer
+		path GFF
+		val BUFFER
 
 	output:
-		file 'genes.bed' into genes_bed
+		path 'genes.bed'
 
 	"""
-	gff2bed < $genes_gff >tmp
+	awk '\$3 == "gene"' ${GFF} >genes.gff
+	gff2bed <genes.gff >tmp
 	awk '{\$2 = \$2 - ${BUFFER}; \$2 = (\$2<0?0:\$2); \$3 = \$3 + ${BUFFER}; \$3 = (\$3<0?0:\$3); print}' OFS='\\t' tmp >genes.bed
 	"""
 
@@ -64,10 +48,10 @@ process gff2bed {
 process bim2bed {
 
 	input:
-		file BIM from bim
+		path BIM
 
 	output:
-		file 'snps.bed' into snps_bed
+		path 'snps.bed'
 
 	"""
 	awk '{print "chr" \$1 "\\t" \$4 "\\t" \$4 "\\t" \$2 "\\t.\\t." }' ${BIM} >tmp
@@ -76,14 +60,14 @@ process bim2bed {
 
 }
 
-process snp2gene {
+process map_snps_to_genes {
 
 	input:
-		file snps_bed
-		file genes_bed
+		path snps_bed
+		path genes_bed
 
 	output:
-		file 'snp2ensembl.tsv' into snp2ensembl
+		path 'snp2ensembl.tsv'
 
 	"""
 	bedtools intersect -a $snps_bed -b $genes_bed -wa -wb >tmp
@@ -94,14 +78,12 @@ process snp2gene {
 
 process ensembl2hgnc {
 
-	publishDir "$params.out", overwrite: true, mode: "copy"
-
 	input:
-		file hgnc
-		file snp2ensembl
+		path snp2ensembl
+		path hgnc
 
 	output:
-		file 'snp2hgnc.tsv' into snp2hgnc
+		path 'snp2hgnc.tsv'
 
 	"""
 	#!/usr/bin/env Rscript
@@ -117,4 +99,28 @@ process ensembl2hgnc {
 		write_tsv('snp2hgnc.tsv')
 	"""
 
+}
+
+workflow snp2gene_nf {
+    take:
+        bim
+        gencode_version
+        grch_version
+        buffer
+    main:
+        download_hgnc()
+        download_gencode(gencode_version, grch_version)
+        gff2bed(download_gencode.out, buffer)
+        bim2bed(bim)
+        map_snps_to_genes(bim2bed.out, gff2bed.out)
+        ensembl2hgnc(map_snps_to_genes.out, download_hgnc.out)
+    emit:
+        ensembl2hgnc.out
+}
+
+workflow {
+    main:
+        snp2gene_nf(file(params.bim), params.gencode_version, params.grch_version, params.buffer)
+    emit:
+        snp2gene_nf.out
 }
