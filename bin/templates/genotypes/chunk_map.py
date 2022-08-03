@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # MAP, CHUNK_SIZE, GENOME
 # chunks
