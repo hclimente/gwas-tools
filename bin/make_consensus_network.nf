@@ -3,7 +3,7 @@
 include { dmgwas_nf as dmgwas } from './dmgwas.nf'
 include { heinz_nf as heinz } from './heinz.nf'
 include { lean_nf as lean } from './lean.nf'
-include { scones_old_nf as scones } from './scones_old.nf'
+include { scones_old_nf as scones } from './scones.nf'
 include { sigmod_nf as sigmod } from './sigmod.nf'
 include { snp_association_nf as snp_assoc } from './snp_association.nf'
 include { vegas2_nf as gene_assoc } from './vegas2.nf'
@@ -115,7 +115,7 @@ process build_consensus {
         lapply(read_tsv) %>%
         bind_rows %>%
         group_by(gene) %>%
-        summarize(n = n()) %>%
+        summarize(n_selected = n()) %>%
         write_tsv("stable_consensus.tsv")
     """
 
@@ -141,5 +141,5 @@ workflow {
             .collect()
         build_consensus(outputs)
     emit:
-        split_data.out
+        build_consensus.out
 }
