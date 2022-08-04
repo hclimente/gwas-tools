@@ -81,11 +81,13 @@ code
 
 process compute_heat {
 
+    tag { SCORES.getBaseName() }
+
     input:
         path SCORES
 
     output:
-        path 'heat.json'
+        path "${SCORES.getBaseName()}.json"
 
     """
     R --no-save <<code
@@ -100,13 +102,16 @@ code
     makeHeatFile.py \
 scores \
 --heat_file scores.ht \
---output_file heat.json \
+--output_file ${SCORES.getBaseName()}.json \
 --name gwas
     """
 
 }
 
 process hotnet2 {
+
+    tag { HEAT.getBaseName() }
+    afterScript "mv consensus/subnetworks.tsv ${HEAT.getBaseName()}.subnetworks.tsv"
 
     input:
         tuple path(NETWORK), path(PERMS) 
@@ -116,7 +121,7 @@ process hotnet2 {
         val HEAT_PERMUTATIONS
 
     output:
-        path 'consensus/subnetworks.tsv'
+        path "${HEAT.getBaseName()}.subnetworks.tsv"
 
     """
     HotNet2.py \
@@ -126,12 +131,16 @@ process hotnet2 {
 --network_permutations ${NETWORK_PERMUTATIONS} \
 --heat_permutations ${HEAT_PERMUTATIONS} \
 --num_cores -1 \
---output_directory .
+--output_directory . \
+--deltas 10
+# TODO rm previous line
     """
 
 }
 
 process process_output {
+
+    tag { SUBNETWORKS.getBaseName() }
 
     input:
         path SUBNETWORKS
@@ -144,11 +153,11 @@ process process_output {
 
 library(tidyverse)
 
-read_tsv('${SUBNETWORKS}', col_types = 'cc', comment = '#', col_names = F) %>%
-    select(X1) %>%
-    mutate(cluster = 1:n()) %>%
-    separate_rows(X1, sep = ' ') %>%
-    rename(gene = X1) %>%
+read_tsv('${SUBNETWORKS}', col_types = 'cc', skip = 1) %>%
+    rename(gene = `#Core`) %>%
+    select(gene) %>%
+    mutate(cluster = ifelse(n() > 0, 1:n(), 0)) %>%
+    separate_rows(gene, sep = ' ') %>%
     write_tsv('selected_genes.hotnet2.tsv')
     """
 

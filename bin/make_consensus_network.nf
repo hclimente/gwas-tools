@@ -113,11 +113,13 @@ process standardize_outputs {
     library(tools)
 
     ext <- file_ext("${OUT}")
+    selected <- read_tsv("${OUT}")
 
-    read_tsv("${OUT}") %>%
-        mutate(.,
-               gene = ifelse("gene" %in% colnames(.), gene, Gene),
-               method = sub(paste0('.', ext), '', '${OUT}'),
+    if ("Gene" %in% colnames(selected))
+        selected <- rename(selected, gene = Gene)
+
+    selected %>%
+        mutate(method = sub(paste0('.', ext), '', '${OUT}'),
                method = sub('[^.]+.', '', method)) %>%
         select(gene, method) %>%
         write_tsv('standardized.tsv')
@@ -167,7 +169,7 @@ workflow {
         /*     .mix(heinz.out, lean.out, sigmod.out) */
         /*     .collect() */
         outputs = heinz.out
-            .mix(lean.out, sigmod.out, scones_genes.out)
+            .mix(hotnet2.out, lean.out, sigmod.out, scones_genes.out)
         standardize_outputs(outputs)
         build_consensus(standardize_outputs.out.collect())
     emit:

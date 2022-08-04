@@ -1,8 +1,6 @@
 # gwas-tools
 
-[![Docker Pulls](https://img.shields.io/docker/cloud/build/hclimente/gwas-tools.svg?style=popout-square&logo=docker)](https://hub.docker.com/repository/docker/hclimente/gwas-tools)
-
-Pipelines for common use-cases when dealing with GWAS datasets, from preprocessing to biomarker discovery. All dependencies are provided in a Docker image.
+Pipelines for common use-cases when dealing with GWAS datasets, from preprocessing to biomarker discovery. All dependencies are provided in a [homonymous Docker image](https://hub.docker.com/repository/docker/hclimente/gwas-tools).
 
 ## Installation
 
