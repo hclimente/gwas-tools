@@ -45,7 +45,6 @@ RUN wget https://github.com/raphael-group/hotnet2/archive/refs/tags/v1.2.1.tar.g
 RUN cd hotnet2-1.2.1 && \
     apt-get update --allow-releaseinfo-change && \
     apt-get install -y python2-dev gcc gfortran && \
-    alias x86_64-linux-gnu-gcc="x86_64-conda-linux-gnu-gcc" && \
     python2 hotnet2/setup_fortran.py build_src build_ext --inplace && \
     python2 hotnet2/setup_c.py build_src build_ext --inplace
 

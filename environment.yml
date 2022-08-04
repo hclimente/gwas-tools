@@ -15,6 +15,7 @@ dependencies:
   # R
   - bioconductor-bionet
   - bioconductor-martini
+  - bioconductor-twilight
   - r
   - r-biglasso
   - r-bigmemory

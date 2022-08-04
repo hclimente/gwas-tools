@@ -1,50 +1,24 @@
 #!/usr/bin/env nextflow
 
-params.out = "."
-
-tab2 = file(params.tab2)
-vegas = file(params.scores)
-hotnet2_path = file(params.hotnet2_path)
-
-network_permutations = 100
-heat_permutations = 1000
+params.network_permutations = 100
+params.heat_permutations = 1000
 beta = 0.4
 params.lfdr_cutoff = 0.05
 
-process make_network {
-
-    input:
-        file TAB2 from tab2
-
-    output:
-        file 'node_index.tsv' into node_index
-        file 'edge_list.tsv' into edge_list
-
-    script:
-    template 'io/tab2_2hotnet.R'
-
-}
-
 process sparse_scores {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
-
     input:
-    file SCORES from vegas
-    val CUTOFF from params.lfdr_cutoff
+        path SCORES
+        val CUTOFF
 
     output:
-    file 'scored_genes.sparse.txt' into sparse_scores
-    file 'lfdr_plot.pdf'
+        path 'scored_genes.sparse.txt'
 
     """
 #!/usr/bin/env Rscript
 
 library(tidyverse)
 library(twilight)
-library(cowplot)
-
-theme_set(theme_cowplot())
 
 scores <- read_tsv('${SCORES}')
 
@@ -66,58 +40,66 @@ lfdr %>%
 
 }
 
-process vegas2hotnet {
+process make_network {
 
     input:
-        file VEGAS from sparse_scores 
+        path TAB2
+        val BETA
+        val NETWORK_PERMUTATIONS
 
     output:
-        file 'scores.ht' into scores
-
-    script:
-    template 'io/vegas2hotnet.R'
-
-}
-
-process make_h5_network {
-
-    input:
-        file HOTNET2 from hotnet2_path
-        file NODE_IDX from node_index
-        file EDGE_LIST from edge_list
-        val BETA from beta
-
-    output:
-        file "ppin_ppr_${BETA}.h5" into h5
-        file 'permuted' into permutations
+        tuple path("ppin_ppr_${BETA}.h5"), path('permuted')
 
     """
-    python2 ${HOTNET2}/makeNetworkFiles.py \
---edgelist_file ${EDGE_LIST} \
---gene_index_file ${NODE_IDX} \
+    R --no-save <<code
+library(tidyverse)
+library(igraph)
+
+net <- read_tsv("${TAB2}") %>%
+  select(\\`Official Symbol Interactor A\\`, \\`Official Symbol Interactor B\\`) %>%
+  graph_from_data_frame(directed = FALSE)
+
+as_edgelist(net, names = FALSE) %>% 
+    as.data.frame %>% 
+    write_tsv('edge_list.tsv', col_names = FALSE)
+tibble(id = V(net), names = names(V(net))) %>%
+    write_tsv('node_index.tsv', col_names = FALSE)
+code
+
+    makeNetworkFiles.py \
+--edgelist_file edge_list.tsv \
+--gene_index_file node_index.tsv \
 --network_name ppin \
 --prefix ppin \
 --beta ${BETA} \
 --cores -1 \
---num_permutations ${network_permutations} \
+--num_permutations ${NETWORK_PERMUTATIONS} \
 --output_dir .
     """
 
 }
 
-process make_heat_data {
+process compute_heat {
 
     input:
-        file HOTNET2 from hotnet2_path
-        file SCORES from scores
+        path SCORES
 
     output:
-        file 'heat.json' into heat
+        path 'heat.json'
 
     """
-    python2 ${HOTNET2}/makeHeatFile.py \
+    R --no-save <<code
+library(tidyverse)
+
+read_tsv('${SCORES}') %>%
+  mutate(score = -log10(Pvalue)) %>%
+  select(Gene, score) %>%
+  write_tsv('scores.ht', col_names = FALSE)
+code
+
+    makeHeatFile.py \
 scores \
---heat_file ${SCORES} \
+--heat_file scores.ht \
 --output_file heat.json \
 --name gwas
     """
@@ -127,22 +109,22 @@ scores \
 process hotnet2 {
 
     input:
-        file HOTNET2 from hotnet2_path
-        file HEAT from heat
-        file NETWORK from h5
-        file PERMS from permutations
-        val BETA from beta
+        tuple path(NETWORK), path(PERMS) 
+        path HEAT
+        val BETA
+        val NETWORK_PERMUTATIONS
+        val HEAT_PERMUTATIONS
 
     output:
-        file 'consensus/subnetworks.tsv' into subnetworks
+        path 'consensus/subnetworks.tsv'
 
     """
-    python2 ${HOTNET2}/HotNet2.py \
+    HotNet2.py \
 --network_files ${NETWORK} \
 --permuted_network_path ${PERMS}/ppin_ppr_${BETA}_##NUM##.h5 \
 --heat_files ${HEAT} \
---network_permutations ${network_permutations} \
---heat_permutations ${heat_permutations} \
+--network_permutations ${NETWORK_PERMUTATIONS} \
+--heat_permutations ${HEAT_PERMUTATIONS} \
 --num_cores -1 \
 --output_directory .
     """
@@ -151,13 +133,11 @@ process hotnet2 {
 
 process process_output {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
-
     input:
-        file SUBNETWORKS from subnetworks
+        path SUBNETWORKS
 
     output:
-        file 'selected_genes.hotnet2.tsv'
+        path 'selected_genes.hotnet2.tsv'
 
     """
 #!/usr/bin/env Rscript
@@ -172,4 +152,28 @@ read_tsv('${SUBNETWORKS}', col_types = 'cc', comment = '#', col_names = F) %>%
     write_tsv('selected_genes.hotnet2.tsv')
     """
 
+}
+
+workflow hotnet2_nf {
+    take:
+        scores
+        tab2
+        lfdr_cutoff
+        network_permutations
+        heat_permutations
+    main:
+        /* sparse_scores(scores, lfdr_cutoff) */
+        make_network(tab2, beta, network_permutations)
+        compute_heat(scores)
+        hotnet2(make_network.out, compute_heat.out, beta, network_permutations, heat_permutations)
+        process_output(hotnet2.out)
+    emit:
+        process_output.out
+}
+
+workflow {
+    main:
+        hotnet2_nf(file(params.scores), file(params.tab2), params.lfdr_cutoff, params.network_permutations, params.heat_permutations)
+    emit:
+        hotnet2_nf.out
 }

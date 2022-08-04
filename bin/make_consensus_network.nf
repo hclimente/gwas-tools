@@ -2,6 +2,7 @@
 
 include { dmgwas_nf as dmgwas } from './dmgwas.nf'
 include { heinz_nf as heinz } from './heinz.nf'
+include { hotnet2_nf as hotnet2 } from './hotnet2.nf'
 include { lean_nf as lean } from './lean.nf'
 include { scones_old_nf as scones } from './scones.nf'
 include { sigmod_nf as sigmod } from './sigmod.nf'
@@ -37,7 +38,9 @@ params.d = 2
 params.fdr = 0.1
 
 //// hotnet2
-hotnet2_path = file('../hotnet2/hotnet2')
+params.hotnet2_lfdr_cutoff = 0.05
+params.hotnet2_network_permutations = 2
+params.hotnet2_heat_permutations = 2
 
 //// scones
 params.scones_criterion = 'consistency'
@@ -154,6 +157,7 @@ workflow {
         snp2gene(bfile[1], params.gencode, params.genome, params.buffer)
         /* dmgwas(gene_assoc.out, tab2, params.d, params.r) */
         heinz(gene_assoc.out, tab2, params.fdr)
+        hotnet2(gene_assoc.out, tab2, params.hotnet2_lfdr_cutoff, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
         lean(gene_assoc.out, tab2)
         scones(split_data.out, tab2, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
         scones_genes(scones.out, snp2gene.out)
