@@ -2,7 +2,6 @@
 
 params.out = "."
 
-params.covar = ''
 params.pheno = ''
 
 // gwas
@@ -36,9 +35,7 @@ if (params.pheno != '') {
     fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
 }
 
-if (params.covar == '') {
-
-   process run_regression {
+process run_regression {
 
        input:
            each I from 1..params.N
@@ -54,33 +51,8 @@ if (params.covar == '') {
        plink --bfile ${BED.baseName} --epistasis --parallel ${I} ${N} --allow-no-sex --out part
        """
 
-    }
-
-} else {
-
-    covar = file(params.covar)
-
-   process run_regression_with_covars {
-
-       input:
-           each I from 1..params.N
-           val N from params.N
-           file BED from bed
-           file BIM from bim
-           file FAM from fam
-           file COVAR from covar
-
-       output:
-           file "part.epi.??.${I}" into parts
-
-       """
-       plink --bfile ${BED.baseName} --epistasis --covar ${COVAR} --parallel ${I} ${N} --allow-no-sex --out part
-       """
-
-    }
-
-
 }
+
 
 process join_parts {
 
@@ -96,4 +68,21 @@ process join_parts {
     cat `ls -v part.epi.*` | sed 's/^ \\+//' | sed 's/ \\+/\t/g' | sed 's/\t\$//' >scored_interactions.regression.txt
     """
 
+}
+
+
+workflow epistasis_regression {
+    take:
+        bed
+        bim
+        fam
+        pheno
+        pheno_index
+        n_jobs
+    main:
+        replace_phenotype(pheno, original_fam, pheno_index)
+        run_regression(1..n_jobs, n_jobs, bed, bim, replace_phenotype.out)
+        join_parts(run_regression.out)
+    emit:
+        join_parts.out
 }
