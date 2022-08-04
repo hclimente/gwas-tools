@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+include { epistasis_regression } from './epistasis_regression.nf'
+
 params.nperm = 999
 params.out = "."
 params.prs = ''
@@ -350,3 +352,46 @@ if (params.prs != '') {
 	"""
 	}
 }
+
+
+workflow epistasis_regression {
+    main:
+		make_snp_models(tab2, bim, snp2gene) 
+		preprocess_data(bed, bim, fam, make_snp_models.out, excluded_snps, params.nperm)
+		snp_epistasis(preprocess_data.out
+        pheno
+        pheno_index
+        n_jobs)
+		
+
+	input:
+		file TAB2 from tab2 
+		file BIM from bim
+		file SNP2GENE from snp2gene
+        replace_phenotype(pheno, original_fam, pheno_index)
+        run_regression(1..n_jobs, n_jobs, bed, bim, replace_phenotype.out)
+        join_parts(run_regression.out)
+    emit:
+        join_parts.out
+}
+
+params.nperm = 999
+params.out = "."
+params.prs = ''
+
+// gwas
+bed = file("${params.bfile}.bed")
+bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
+fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
+
+// gene & snp networks
+tab2 = file("${params.tab2}")
+snp2gene = file("${params.snp2gene}")
+excluded_snps = file("${params.excluded}"
+
+		file BED from bed
+		file bim
+		file FAM from fam
+		file SNP2SNP from snp2snp_1 
+		file EXCLUDED from excluded_snps
+		val I from params.nperm
