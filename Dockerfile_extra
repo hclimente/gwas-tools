@@ -1,0 +1,53 @@
+FROM hclimente/gwas-tools
+
+# software with restrictive licenses
+ENV PATH="/tools:${PATH}"
+WORKDIR /tools
+
+# pip2
+RUN wget https://bootstrap.pypa.io/pip/2.7/get-pip.py && \
+    python2 get-pip.py && \
+    rm get-pip.py
+# GTOOL
+RUN wget http://www.well.ox.ac.uk/~cfreeman/software/gwas/gtool_v0.7.5_x86_64.tgz  && \
+    tar -zxvf gtool_v0.7.5_x86_64.tgz && \
+    rm -rf gtool_v0.7.5_x86_64.tgz LICENCE example/
+# IMPUTE
+RUN wget https://mathgen.stats.ox.ac.uk/impute/impute_v2.3.2_x86_64_static.tgz && \
+    tar -zxvf impute_v2.3.2_x86_64_static.tgz && \
+    mv impute_v2.3.2_x86_64_static/impute2 . && \
+    rm -rf impute_v2.3.2_x86_64_static* 
+# MB-MDR
+RUN wget http://bio3.giga.ulg.ac.be/software/mbmdr-4.4.1/mbmdr-4.4.1-linux-64bits.out && \
+    mv mbmdr-4.4.1-linux-64bits.out mbmdr && \
+    chmod a+x mbmdr
+# AntEpiSeeker
+RUN wget http://nce.ads.uga.edu/~romdhane/AntEpiSeeker/AntEpiSeeker1.0_linux.zip && \
+    unzip AntEpiSeeker1.0_linux.zip && \
+    mv AntEpiSeeker1.0_linux/AntEpiSeeker . && \
+    rm -rf AntEpiSeeker1.0_linux*
+# HotNet2
+RUN wget https://github.com/raphael-group/hotnet2/archive/refs/tags/v1.2.1.tar.gz && \
+    tar xzf v1.2.1.tar.gz && \
+    rm v1.2.1.tar.gz && \
+    cd hotnet2-1.2.1 && \
+    pip2 install -r requirements.txt && \
+    sed 's/env python/env python2/' HotNet2.py >HotNet2_custom.py && \
+    echo "#!/usr/bin/env python2" >makeHeatFile_custom.py && \
+    cat makeHeatFile.py >>makeHeatFile_custom.py && \
+    sed 's/env python/env python2/' makeNetworkFiles.py >makeNetworkFiles_custom.py && \
+    cd .. && \
+    ln -s hotnet2-1.2.1/HotNet2_custom.py HotNet2.py && \
+    ln -s hotnet2-1.2.1/makeNetworkFiles_custom.py makeNetworkFiles.py && \
+    ln -s hotnet2-1.2.1/makeHeatFile_custom.py makeHeatFile.py && \
+    chmod a+x HotNet2.py makeHeatFile.py makeNetworkFiles.py
+# HotNet2 compiled components
+RUN cd hotnet2-1.2.1 && \
+    apt-get update --allow-releaseinfo-change && \
+    apt-get install -y python2-dev gcc gfortran && \
+    alias x86_64-linux-gnu-gcc="x86_64-conda-linux-gnu-gcc" && \
+    python2 hotnet2/setup_fortran.py build_src build_ext --inplace && \
+    python2 hotnet2/setup_c.py build_src build_ext --inplace
+
+# set up project
+WORKDIR /work

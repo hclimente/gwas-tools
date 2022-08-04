@@ -6,13 +6,13 @@ COPY environment.yml .
 RUN mamba env update -n base -f environment.yml
 
 # additional software
-RUN mkdir /gwas-tools
-ENV PATH="/gwas-tools:${PATH}"
-WORKDIR /gwas-tools
+RUN mkdir /tools
+ENV PATH="/tools:${PATH}"
+WORKDIR /tools
 
 COPY extra_deps.sh .
-RUN bash extra_deps.sh
+RUN bash extra_deps.sh && rm extra_deps.sh
 
-# set up project
+# set up workdir
 RUN mkdir /work
 WORKDIR /work
