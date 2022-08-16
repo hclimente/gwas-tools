@@ -28,6 +28,7 @@ params.buffer = 0
 bfile_controls = get_bfile(params.bfile_controls)
 
 /// network selection
+params.network = null
 tab2 = file(params.tab2)
 
 //// dmgwas
@@ -55,6 +56,16 @@ params.scones_score = 'chi2'
 params.lambdamax = 2
 params.nmax = 1
 params.maxjump = 1
+
+process download_hint {
+
+    output:
+        file "hint_hgnc.tsv"
+
+    script:
+    template 'dbs/hint.sh'
+
+}
 
 process split_data {
 
@@ -153,6 +164,14 @@ process build_consensus {
 
 workflow {
     main:
+
+        if (params.network == null) {
+            download_hint()
+            network = download_hint.out
+        } else {
+            network = file(params.network)
+        }
+
         split_data(bfile, 1..params.splits, params.splits)
         snp_assoc(split_data.out, params.covars)
         gene_assoc(snp_assoc.out, bfile_controls, params.gencode, params.genome, params.buffer, '')
