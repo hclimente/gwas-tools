@@ -43,7 +43,7 @@ lfdr %>%
 process make_network {
 
     input:
-        path TAB2
+        path EDGELIST
         val BETA
         val NETWORK_PERMUTATIONS
 
@@ -55,8 +55,7 @@ process make_network {
 library(tidyverse)
 library(igraph)
 
-net <- read_tsv("${TAB2}") %>%
-  select(\\`Official Symbol Interactor A\\`, \\`Official Symbol Interactor B\\`) %>%
+net <- read_tsv("${EDGELIST}") %>%
   graph_from_data_frame(directed = FALSE)
 
 as_edgelist(net, names = FALSE) %>% 

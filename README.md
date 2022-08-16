@@ -46,7 +46,7 @@ Then, simply add '*-with-docker hclimente/gwas-tools[-extra]*' or '*-with-singul
 ### Network-guided GWAS
 <a name="network_gwas"></a>
 
-We adapted and benchmarked multiple algorithms for the detection of SNPs associated to a phenotype. If you use any of the following algorithms, please cite the following article:
+We adapted and benchmarked multiple algorithms for the detection of SNPs associated to a phenotype. If you use any of the following algorithms, please cite the original algorithm's article, and the following article:
 
 > Climente-González H, Lonjou C, Lesueur F, GENESIS study group, Stoppa-Lyonnet D, et al. (2021) **Boosting GWAS using biological networks: A study on susceptibility to familial breast cancer.** PLOS Computational Biology 17(3): e1008819. https://doi.org/10.1371/journal.pcbi.1008819
 

@@ -9,7 +9,7 @@ process heinz {
 
     input:
         file SCORES
-        file TAB2
+        file EDGELIST
         val FDR
 
     output:
@@ -23,11 +23,8 @@ process heinz {
     library(BioNet)
 
     vegas <- read_tsv('${SCORES}')
-    net <- read_tsv("${TAB2}") %>%
-        rename(gene1 = `Official Symbol Interactor A`, 
-               gene2 = `Official Symbol Interactor B`) %>%
+    net <- read_tsv("${EDGELIST}") %>%
         filter(gene1 %in% vegas\$Gene & gene2 %in% vegas\$Gene) %>%
-        select(gene1, gene2) %>%
         graph_from_data_frame(directed = FALSE)
     vegas <- filter(vegas, Gene %in% names(V(net)))
 

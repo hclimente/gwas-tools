@@ -4,8 +4,7 @@ library(LEANR)
 library(tidyverse)
 
 # read tab2 file
-net <- read_tsv("${TAB2}") %>%
-    select(`Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
+net <- read_tsv("${EDGELIST}") %>%
     graph_from_data_frame(directed = FALSE)
 
 # read gene scores

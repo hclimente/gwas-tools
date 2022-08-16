@@ -7,11 +7,8 @@ scripts <- list.files('${SIGMOD_PATH}/R', pattern='*.R\$', full.names=TRUE, igno
 sapply(scripts, source, .GlobalEnv)
 
 # read network
-net <- read_tsv("${TAB2}") %>%
-rename(Interactor_A = `Official Symbol Interactor A`, 
-        Interactor_B = `Official Symbol Interactor B`) %>%
-    select(Interactor_A, Interactor_B) %>%
-    filter(Interactor_A != Interactor_B) %>%
+net <- read_tsv("${EDGELIST}") %>%
+    filter(gene1 != gene2) %>%
     as.data.frame
 
 # read vegas output

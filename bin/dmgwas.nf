@@ -9,7 +9,7 @@ process dmgwas {
 
     input:
         path SCORES
-        path TAB2
+        path EDGELIST
         val D
         val R
 
@@ -26,11 +26,7 @@ process dmgwas {
         select(Gene, Pvalue) %>%
         mutate(Pvalue = ifelse(Pvalue == 1, 0.99999, Pvalue)) %>%
         as.data.frame
-    net <- read_tsv('${TAB2}',
-		    col_types = 'cccccccccccccccccccccccc') %>%
-        rename(interactorA = `Official Symbol Interactor A`, 
-               interactorB = `Official Symbol Interactor B`) %>%
-        select(interactorA, interactorB)
+    net <- read_tsv('${EDGELIST}')
 
     modules <- dms(net, scores, expr1 = NULL, expr2 = NULL, r = ${R}, d = ${D})
     top <- simpleChoose(modules)

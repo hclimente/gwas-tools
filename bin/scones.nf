@@ -37,7 +37,7 @@ process make_snp_network {
     tag { RGWAS.getBaseName() }
 
     input:
-        path TAB2
+        path EDGELIST
         val NET
         path SNP2GENE
         path RGWAS
@@ -58,14 +58,10 @@ process make_snp_network {
         net <- get_GS_network(gwas)
     } else if (netType %in% c('gm', 'gi')) {
         snp2gene <- read_tsv("${SNP2GENE}")
-
         if (netType == "gm") {
             net <- get_GM_network(gwas, snpMapping = snp2gene)
         } else if (netType == "gi") {
-            tab2 <- read_tsv("${TAB2}") %>%
-                rename(gene1 = `Official Symbol Interactor A`, gene2 = `Official Symbol Interactor B`) %>%
-                select(gene1, gene2)
-            net <- get_GI_network(gwas, snpMapping = snp2gene, ppi = tab2)
+            net <- get_GI_network(gwas, snpMapping = snp2gene, ppi = read_tsv("${EDGELIST}"))
         }
     } else {
         stop("network type not recognized.")

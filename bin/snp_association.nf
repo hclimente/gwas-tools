@@ -19,7 +19,8 @@ process chisquare_test {
     
     """
     plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc --allow-no-sex
-    awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc >${BED.getBaseName()}.chisq
+    echo "chr\\tpos\\tsnp\\tpvalue" >${BED.getBaseName()}.chisq
+    awk 'NR > 1 && \$9 != "NA" { print \$1, \$3, \$2,\$9 }' OFS='\\t' plink.assoc >${BED.getBaseName()}.chisq
     """
 
 }
@@ -37,7 +38,8 @@ process adjusted_logistic_regression {
     
     """
     plink --bed ${BED} --bim ${BIM} --fam ${FAM} --logistic --covar ${COVAR}
-    awk 'NR > 1 && \$5 == "ADD" && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc.logistic >${BED.getBaseName()}.logreg
+    echo "chr\\tpos\\tsnp\\tpvalue" >${BED.getBaseName()}.logreg
+    awk 'NR > 1 && \$5 == "ADD" && \$9 != "NA" { print \$1, \$3, \$2,\$9 }' OFS='\\t' plink.assoc.logistic >>${BED.getBaseName()}.logreg
     """
 
 }

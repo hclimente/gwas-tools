@@ -21,7 +21,7 @@ process sigmod {
 
     input:
         path SCORES
-        path TAB2
+        path EDGELIST
         val LAMBDAMAX
         val NMAX
         val MAXJUMP

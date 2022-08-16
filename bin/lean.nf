@@ -6,7 +6,7 @@ process lean {
 
     input:
         path SCORES
-        path TAB2
+        path EDGELIST
 
     output:
         path 'scored_genes.lean.txt'

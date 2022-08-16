@@ -46,7 +46,9 @@ process vegas2 {
         tuple val("${SNP_ASSOC.getBaseName()}"), path("chr_${CHR}.tsv")
 
     """
-    vegas2v2 -G -snpandp ${SNP_ASSOC} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes -chr $CHR ${VEGAS_PARAMS}
+    cut -f3,4 ${SNP_ASSOC} | tail -n +2 >assoc
+
+    vegas2v2 -G -snpandp assoc -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes -chr $CHR ${VEGAS_PARAMS}
     sed 's/"//g' scored_genes.out | sed 's/ /\\t/g' >tmp
     R -e 'library(tidyverse); read_tsv("tmp", col_types = "iciddddddcd") %>% filter(!duplicated(Gene)) %>% write_tsv("chr_${CHR}.tsv")'
     """
@@ -95,8 +97,8 @@ workflow vegas2_nf {
         download_gencode(gencode_version, genome_version)
         compute_gene_coords(download_gencode.out, params.buffer)
 
-        chromosomes = compute_gene_coords.out
-            .splitCsv(header: false, sep: ' ')
+        chromosomes = snp_association
+            .splitCsv(sep: '\t')
             .map { row -> row[0] }
             .unique()
 

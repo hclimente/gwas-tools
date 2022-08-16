@@ -27,9 +27,8 @@ params.buffer = 0
 
 bfile_controls = get_bfile(params.bfile_controls)
 
-/// network selection
-params.network = null
-tab2 = file(params.tab2)
+/// edgelist selection
+params.edgelist = null
 
 //// dmgwas
 params.dmgwas_r = 0.1
@@ -164,24 +163,24 @@ process build_consensus {
 workflow {
     main:
 
-        if (params.network == null) {
+        if (params.edgelist == null) {
             download_hint()
-            network = download_hint.out
+            edgelist = download_hint.out
         } else {
-            network = file(params.network)
+            edgelist = file(params.edgelist)
         }
 
         split_data(bfile, 1..params.splits, params.splits)
         snp_assoc(split_data.out, params.covars)
         gene_assoc(snp_assoc.out, bfile_controls, params.gencode, params.genome, params.buffer, '')
         snp2gene(bfile[1], params.gencode, params.genome, params.buffer)
-        dmgwas(gene_assoc.out, tab2, params.dmgwas_d, params.dmgwas_r)
-        heinz(gene_assoc.out, tab2, params.heinz_fdr)
-        hotnet2(gene_assoc.out, tab2, params.hotnet2_lfdr_cutoff, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
-        lean(gene_assoc.out, tab2)
-        scones(split_data.out, tab2, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
+        dmgwas(gene_assoc.out, edgelist, params.dmgwas_d, params.dmgwas_r)
+        heinz(gene_assoc.out, edgelist, params.heinz_fdr)
+        hotnet2(gene_assoc.out, edgelist, params.hotnet2_lfdr_cutoff, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
+        lean(gene_assoc.out, edgelist)
+        scones(split_data.out, edgelist, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
         scones_genes(scones.out, snp2gene.out)
-        sigmod(gene_assoc.out, tab2, params.sigmod_lambdamax, params.sigmod_nmax, params.sigmod_maxjump)
+        sigmod(gene_assoc.out, edgelist, params.sigmod_lambdamax, params.sigmod_nmax, params.sigmod_maxjump)
 
         outputs = dmgwas.out
             .mix(heinz.out, hotnet2.out, lean.out, scones_genes.out, sigmod.out)
