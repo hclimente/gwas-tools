@@ -27,9 +27,6 @@ process compute_gene_coords {
     gff2bed < genes.gff | cut -f1-4 | sed 's/\\.[^\\t]\\+\$//' | sed 's/^chr//' >tmp
     awk '{\$2 = \$2 - ${BUFF}; \$3 = \$3 + ${BUFF}} 1' tmp | awk '\$2 < 0 {\$2 = 0} 1' >buffered_genes
     sed 's/^XY/25/' buffered_genes | sed 's/^X/23/' | sed 's/^Y/24/' | sed 's/^M/26/' | awk '\$1 <= 24' >glist_ensembl
-#TODO REMOVE
-    grep "^2[23]" glist_ensembl >kk
-    mv kk glist_ensembl
     """
 
 }
@@ -76,7 +73,7 @@ process merge_chromosomes {
 		select(symbol, ensembl_gene_id)
 
     list.files(pattern="chr_") %>%
-        lapply(read_tsv) %>%
+        lapply(read_tsv, col_types = 'cciiiiddcd') %>%
         bind_rows %>%
         inner_join(ensembl2hgnc, by = c("Gene" = "ensembl_gene_id")) %>%
         mutate(Gene = symbol) %>%

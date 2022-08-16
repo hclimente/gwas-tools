@@ -131,9 +131,7 @@ process hotnet2 {
 --network_permutations ${NETWORK_PERMUTATIONS} \
 --heat_permutations ${HEAT_PERMUTATIONS} \
 --num_cores -1 \
---output_directory . \
---deltas 10
-# TODO rm previous line
+--output_directory .
     """
 
 }

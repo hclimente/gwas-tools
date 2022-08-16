@@ -31,30 +31,22 @@ bfile_controls = get_bfile(params.bfile_controls)
 tab2 = file(params.tab2)
 
 //// dmgwas
-params.r = 0.1
-params.d = 2
+params.dmgwas_r = 0.1
+params.dmgwas_d = 2
 
-//// heinz
-params.fdr = 0.1
+params.heinz_fdr = 0.1
 
-//// hotnet2
 params.hotnet2_lfdr_cutoff = 0.05
 params.hotnet2_network_permutations = 2
 params.hotnet2_heat_permutations = 2
 
-//// scones
 params.scones_criterion = 'consistency'
-params.scones_network = 'gs'
+params.scones_network = 'gi'
 params.scones_score = 'chi2'
 
-//// sigmod
-// TODO remove
-/* params.lambdamax = 1 */
-/* params.nmax = 300 */
-/* params.maxjump = 10 */
-params.lambdamax = 2
-params.nmax = 1
-params.maxjump = 1
+params.sigmod_lambdamax = 1
+params.sigmod_nmax = 300
+params.sigmod_maxjump = 10
 
 process split_data {
 
@@ -118,6 +110,9 @@ process standardize_outputs {
     if ("Gene" %in% colnames(selected))
         selected <- rename(selected, gene = Gene)
 
+    if ("PLEAN" %in% colnames(selected))
+        selected <- filter(selected, PLEAN < 0.05)
+
     selected %>%
         mutate(method = sub(paste0('.', ext), '', '${OUT}'),
                method = sub('[^.]+.', '', method)) %>%
@@ -142,9 +137,13 @@ process build_consensus {
     list.files(pattern="genes_") %>%
         lapply(read_tsv) %>%
         bind_rows %>%
+        group_by(gene, method) %>%
+        summarize(n = n(),
+                  tmp = paste0(method, "(", n(), ")")) %>%
+        unique %>%
         group_by(gene) %>%
-        summarize(n_selected = n(),
-                  methods = unique(method) %>% paste(collapse = ',')) %>%
+        summarize(n_selected = sum(n),
+                  methods = paste(tmp, collapse = ',')) %>%
         arrange(-n_selected) %>%
         write_tsv("stable_consensus.tsv")
     """
@@ -157,19 +156,16 @@ workflow {
         snp_assoc(split_data.out, params.covars)
         gene_assoc(snp_assoc.out, bfile_controls, params.gencode, params.genome, params.buffer, '')
         snp2gene(bfile[1], params.gencode, params.genome, params.buffer)
-        /* dmgwas(gene_assoc.out, tab2, params.d, params.r) */
-        heinz(gene_assoc.out, tab2, params.fdr)
+        dmgwas(gene_assoc.out, tab2, params.dmgwas_d, params.dmgwas_r)
+        heinz(gene_assoc.out, tab2, params.heinz_fdr)
         hotnet2(gene_assoc.out, tab2, params.hotnet2_lfdr_cutoff, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
         lean(gene_assoc.out, tab2)
         scones(split_data.out, tab2, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
         scones_genes(scones.out, snp2gene.out)
-        sigmod(gene_assoc.out, tab2, params.lambdamax, params.nmax, params.maxjump)
+        sigmod(gene_assoc.out, tab2, params.sigmod_lambdamax, params.sigmod_nmax, params.sigmod_maxjump)
 
-        /* outputs = dmgwas.out */
-        /*     .mix(heinz.out, lean.out, sigmod.out) */
-        /*     .collect() */
-        outputs = heinz.out
-            .mix(hotnet2.out, lean.out, sigmod.out, scones_genes.out)
+        outputs = dmgwas.out
+            .mix(heinz.out, hotnet2.out, lean.out, scones_genes.out, sigmod.out)
         standardize_outputs(outputs)
         build_consensus(standardize_outputs.out.collect())
     emit:
