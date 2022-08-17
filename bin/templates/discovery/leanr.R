@@ -3,7 +3,7 @@ library(igraph)
 library(LEANR)
 library(tidyverse)
 
-# read tab2 file
+# read edgelist
 net <- read_tsv("${EDGELIST}") %>%
     graph_from_data_frame(directed = FALSE)
 

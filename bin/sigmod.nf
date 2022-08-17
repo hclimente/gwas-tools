@@ -38,20 +38,20 @@ process sigmod {
 workflow sigmod_nf {
     take:
         scores
-        tab2
+        edgelist
         lambdamax
         nmax
         maxjump
     main:
         download_sigmod()
-        sigmod(scores, tab2, lambdamax, nmax, maxjump, download_sigmod.out)
+        sigmod(scores, edgelist, lambdamax, nmax, maxjump, download_sigmod.out)
     emit:
         sigmod.out
 }
 
 workflow {
     main:
-        sigmod_nf(file(params.scores), file(params.tab2), params.lambdamax, params.nmax, params.maxjump)
+        sigmod_nf(file(params.scores), file(params.edgelist), params.lambdamax, params.nmax, params.maxjump)
     emit:
         sigmod_nf.out
 }

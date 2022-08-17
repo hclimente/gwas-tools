@@ -48,17 +48,17 @@ process heinz {
 workflow heinz_nf {
     take:
         scores
-        tab2
+        edgelist
         fdr
     main:
-        heinz(scores, tab2, fdr)
+        heinz(scores, edgelist, fdr)
     emit:
         heinz.out
 }
 
 workflow {
     main:
-        heinz_nf(file(params.scores), file(params.tab2), params.fdr)
+        heinz_nf(file(params.scores), file(params.edgelist), params.fdr)
     emit:
         heinz_nf.out
 }
