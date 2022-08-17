@@ -54,7 +54,7 @@ The available methods are:
 
 - dmGWAS: `dmgwas.nf --vegas scored_genes.top10.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
 - heinz: `heinz.nf --vegas scored_genes.top10.txt --edgelist test/data/interactions.tsv --fdr 0.5 -with-docker hclimente/gwas-tools`
-- HotNet2: `hotnet2.nf --scores scored_genes.top10.txt --edgelist test/data/interactions.tsv --hotnet2_path hotnet2 --lfdr_cutoff 0.125 -with-docker hclimente/gwas-tools`
+- HotNet2: `hotnet2.nf --scores test/data/scored_genes.vegas.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools-extra`
 - LEAN: `lean.nf --vegas scored_genes.top10.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
 - SConES: `scones.nf --bfile test/data/example --network gi --snp2gene test/data/snp2gene.tsv --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
 - Sigmod: `sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
