@@ -74,6 +74,8 @@ process split_data {
 
 process extract_controls {
 
+    tag { BED.getBaseName() }
+
     input:
         tuple path(BED), path(BIM), path(FAM)
 
