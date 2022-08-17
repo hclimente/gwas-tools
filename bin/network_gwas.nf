@@ -26,17 +26,16 @@ params.gencode = 28
 params.genome = '38'
 params.vegas2_params = ''
 
-/// edgelist selection
+/// network selection
 params.edgelist = null
 
-//// dmgwas
 params.dmgwas_r = 0.1
 params.dmgwas_d = 2
 
 params.heinz_fdr = 0.1
 
 params.hotnet2_heat_permutations = 1000
-params.hotnet2_lfdr_cutoff = 0.05
+params.hotnet2_fdr = 0.2
 params.hotnet2_network_permutations = 100
 
 params.scones_criterion = 'consistency'
@@ -211,7 +210,7 @@ workflow {
         snp2gene(bfile[1], params.gencode, params.genome, params.buffer)
         dmgwas(gene_assoc.out, edgelist, params.dmgwas_d, params.dmgwas_r)
         heinz(gene_assoc.out, edgelist, params.heinz_fdr)
-        hotnet2(gene_assoc.out, edgelist, params.hotnet2_lfdr_cutoff, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
+        hotnet2(gene_assoc.out, edgelist, params.hotnet2_fdr, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
         lean(gene_assoc.out, edgelist)
         scones(split_data.out, edgelist, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
         scones_genes(scones.out, snp2gene.out)

@@ -3,42 +3,7 @@
 params.network_permutations = 100
 params.heat_permutations = 1000
 beta = 0.4
-params.lfdr_cutoff = 0.05
-
-process sparse_scores {
-
-    input:
-        path SCORES
-        val CUTOFF
-
-    output:
-        path 'scored_genes.sparse.txt'
-
-    """
-#!/usr/bin/env Rscript
-
-library(tidyverse)
-library(twilight)
-
-scores <- read_tsv('${SCORES}')
-
-lfdr <- twilight(scores\$Pvalue, B=1000)
-lfdr <- tibble(Gene = scores\$Gene[as.numeric(rownames(lfdr\$result))],
-               vegas_p = scores\$Pvalue[as.numeric(rownames(lfdr\$result))],
-               lfdr = lfdr\$result\$fdr)
-
-ggplot(lfdr, aes(x = vegas_p, y = 1 - lfdr)) +
-    geom_line() +
-    geom_vline(xintercept = ${CUTOFF}, color = 'red') +
-    labs(x = 'P-value', y = '1 - lFDR')
-ggsave('lfdr_plot.pdf', width=7, height=6)
-
-lfdr %>%
-    mutate(Pvalue = ifelse(vegas_p < ${CUTOFF}, vegas_p, 1)) %>%
-    write_tsv('scored_genes.sparse.txt')
-    """
-
-}
+params.fdr = 0.2
 
 process make_network {
 
@@ -84,6 +49,7 @@ process compute_heat {
 
     input:
         path SCORES
+        val CUTOFF
 
     output:
         path "${SCORES.getBaseName()}.json"
@@ -93,9 +59,12 @@ process compute_heat {
 library(tidyverse)
 
 read_tsv('${SCORES}') %>%
-  mutate(score = -log10(Pvalue)) %>%
-  select(Gene, score) %>%
-  write_tsv('scores.ht', col_names = FALSE)
+    # sparsify scores
+    mutate(padj = p.adjust(Pvalue, method = "fdr"),
+           p = ifelse(padj < ${CUTOFF}, Pvalue, 1), 
+           score = -log10(p)) %>%
+    select(Gene, score) %>%
+    write_tsv('scores.ht', col_names = FALSE)
 code
 
     makeHeatFile.py \
@@ -165,13 +134,12 @@ workflow hotnet2_nf {
     take:
         scores
         edgelist
-        lfdr_cutoff
+        fdr
         network_permutations
         heat_permutations
     main:
-        /* sparse_scores(scores, lfdr_cutoff) */
         make_network(edgelist, beta, network_permutations)
-        compute_heat(scores)
+        compute_heat(scores, fdr)
         hotnet2(make_network.out, compute_heat.out, beta, network_permutations, heat_permutations)
         process_output(hotnet2.out)
     emit:
@@ -180,7 +148,7 @@ workflow hotnet2_nf {
 
 workflow {
     main:
-        hotnet2_nf(file(params.scores), file(params.edgelist), params.lfdr_cutoff, params.network_permutations, params.heat_permutations)
+        hotnet2_nf(file(params.scores), file(params.edgelist), params.fdr, params.network_permutations, params.heat_permutations)
     emit:
         hotnet2_nf.out
 }
