@@ -79,7 +79,6 @@ scores \
 process hotnet2 {
 
     tag { HEAT.getBaseName() }
-    afterScript "mv consensus/subnetworks.tsv ${HEAT.getBaseName()}.subnetworks.tsv"
 
     input:
         tuple path(NETWORK), path(PERMS) 
@@ -100,6 +99,8 @@ process hotnet2 {
 --heat_permutations ${HEAT_PERMUTATIONS} \
 --num_cores -1 \
 --output_directory .
+
+    mv consensus/subnetworks.tsv ${HEAT.getBaseName()}.subnetworks.tsv
     """
 
 }
