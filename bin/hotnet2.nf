@@ -110,7 +110,6 @@ scores \
 process hotnet2 {
 
     tag { HEAT.getBaseName() }
-    afterScript "mv consensus/subnetworks.tsv ${HEAT.getBaseName()}.subnetworks.tsv"
 
     input:
         tuple path(NETWORK), path(PERMS) 
@@ -131,6 +130,8 @@ process hotnet2 {
 --heat_permutations ${HEAT_PERMUTATIONS} \
 --num_cores -1 \
 --output_directory .
+
+    mv consensus/subnetworks.tsv ${HEAT.getBaseName()}.subnetworks.tsv
     """
 
 }
@@ -163,13 +164,13 @@ read_tsv('${SUBNETWORKS}', col_types = 'cc', skip = 1) %>%
 workflow hotnet2_nf {
     take:
         scores
-        tab2
+        edgelist
         lfdr_cutoff
         network_permutations
         heat_permutations
     main:
         /* sparse_scores(scores, lfdr_cutoff) */
-        make_network(tab2, beta, network_permutations)
+        make_network(edgelist, beta, network_permutations)
         compute_heat(scores)
         hotnet2(make_network.out, compute_heat.out, beta, network_permutations, heat_permutations)
         process_output(hotnet2.out)
@@ -179,7 +180,7 @@ workflow hotnet2_nf {
 
 workflow {
     main:
-        hotnet2_nf(file(params.scores), file(params.tab2), params.lfdr_cutoff, params.network_permutations, params.heat_permutations)
+        hotnet2_nf(file(params.scores), file(params.edgelist), params.lfdr_cutoff, params.network_permutations, params.heat_permutations)
     emit:
         hotnet2_nf.out
 }

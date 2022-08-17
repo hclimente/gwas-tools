@@ -36,9 +36,9 @@ params.dmgwas_d = 2
 
 params.heinz_fdr = 0.1
 
+params.hotnet2_heat_permutations = 1000
 params.hotnet2_lfdr_cutoff = 0.05
-params.hotnet2_network_permutations = 2
-params.hotnet2_heat_permutations = 2
+params.hotnet2_network_permutations = 100
 
 params.scones_criterion = 'consistency'
 params.scones_network = 'gi'
