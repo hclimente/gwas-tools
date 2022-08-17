@@ -18,16 +18,16 @@ process lean {
 workflow lean_nf {
     take:
         scores
-        tab2
+        edgelist
     main:
-        lean(scores, tab2)
+        lean(scores, edgelist)
     emit:
         lean.out
 }
 
 workflow {
     main:
-        lean_nf(file(params.scores), file(params.tab2))
+        lean_nf(file(params.scores), file(params.edgelist))
     emit:
         lean_nf.out
 }

@@ -7,7 +7,7 @@ bfile = get_bfile(params.bfile)
 
 // SConES parameters
 params.snp2gene = null
-params.tab2 = null
+params.edgelist = null
 
 params.network = 'gs'
 params.score = 'chi2'
@@ -130,7 +130,7 @@ process parametrized_scones_old {
 workflow scones_old_nf {
     take:
         bfile
-        tab2
+        edgelist
         network
         snp2gene
         score
@@ -139,10 +139,10 @@ workflow scones_old_nf {
         lambda
     main:
         snp2gene = (network == 'gm' | network == 'gi') ? snp2gene : null
-        tab2 = (network == 'gi') ? tab2 : null
+        edgelist = (network == 'gi') ? edgelist : null
 
         read_bfile(bfile)
-        make_snp_network(tab2, network, snp2gene, read_bfile.out)
+        make_snp_network(edgelist, network, snp2gene, read_bfile.out)
 
         if (eta == null | lambda == null) {
             scones_old(read_bfile.out, make_snp_network.out, score, criterion)
@@ -158,17 +158,17 @@ workflow scones_old_nf {
 workflow scones_nf {
     take:
         bfile
-        tab2
+        edgelist
         network
         snp2gene
         score
         criterion
     main:
         snp2gene = (network == 'gm' | network == 'gi') ? snp2gene : null
-        tab2 = (network == 'gi') ? tab2 : null
+        edgelist = (network == 'gi') ? edgelist : null
 
         read_bfile(bfile)
-        make_snp_network(tab2, network, snp2gene, read_bfile.out)
+        make_snp_network(edgelist, network, snp2gene, read_bfile.out)
         scones(read_bfile.out, make_snp_network.out, score, criterion)
     emit:
         scones.out
@@ -176,7 +176,7 @@ workflow scones_nf {
 
 workflow {
     main:
-        scones_old_nf(bfile, params.tab2, params.network, params.snp2gene, params.score, params.criterion, params.eta, params.lambda)
+        scones_old_nf(bfile, params.edgelist, params.network, params.snp2gene, params.score, params.criterion, params.eta, params.lambda)
     emit:
         scones_old_nf.out
 }

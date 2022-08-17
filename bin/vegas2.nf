@@ -3,15 +3,13 @@
 include { download_hgnc; download_gencode } from './snp2gene.nf'
 include { get_bfile } from './templates/utils.nf'
 
+params.buffer = 0
 params.gencode = 28
 params.genome = '38'
-params.vegas_params = ''
-params.covar = ''
 params.snp_association = ''
-params.ld_controls = ''
-params.buffer = 0
+params.vegas2_params = ''
 
-bfile_controls = get_bfile(params.bfile_controls)
+bfile_ld_controls = get_bfile(params.bfile_ld_controls)
 
 process compute_gene_coords {
 
@@ -88,11 +86,11 @@ process merge_chromosomes {
 workflow vegas2_nf {
     take:
         snp_association
-        bfile_controls
+        bfile_ld_controls
         gencode_version
         genome_version
         buffer
-        vegas_params
+        vegas2_params
     main:
         download_gencode(gencode_version, genome_version)
         compute_gene_coords(download_gencode.out, params.buffer)
@@ -102,7 +100,7 @@ workflow vegas2_nf {
             .map { row -> row[0] }
             .unique()
 
-        vegas2(snp_association, bfile_controls, compute_gene_coords.out, vegas_params, chromosomes)
+        vegas2(snp_association, bfile_ld_controls, compute_gene_coords.out, vegas2_params, chromosomes)
 
         vegas_outputs = vegas2.out
             .groupTuple()
@@ -115,7 +113,7 @@ workflow vegas2_nf {
 
 workflow {
     main:
-        vegas2_nf(file(params.snp_association), bfile_controls, params.gencode, params.genome, params.buffer, params.vegas_params)
+        vegas2_nf(file(params.snp_association), bfile_ld_controls, params.gencode, params.genome, params.buffer, params.vegas2_params)
     emit:
         vegas2_nf.out
 }

@@ -40,18 +40,18 @@ process dmgwas {
 workflow dmgwas_nf {
     take:
         scores
-        tab2
+        edgelist
         d
         r
     main:
-        dmgwas(scores, tab2, d, r)
+        dmgwas(scores, edgelist, d, r)
     emit:
         dmgwas.out
 }
 
 workflow {
     main:
-        dmgwas_nf(file(params.scores), file(params.tab2), params.d, params.r)
+        dmgwas_nf(file(params.scores), file(params.edgelist), params.d, params.r)
     emit:
         dmgwas_nf.out
 }
