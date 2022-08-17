@@ -21,9 +21,9 @@ params.covars = ''
 
 /// vegas2
 params.bfile_ld_controls = null
-params.buffer = 0
-params.gencode = 28
-params.genome = '38'
+params.buffer = 50000
+params.gencode_version = 28
+params.genome_version = '38'
 params.vegas2_params = ''
 
 /// network selection
@@ -32,7 +32,7 @@ params.edgelist = null
 params.dmgwas_r = 0.1
 params.dmgwas_d = 2
 
-params.heinz_fdr = 0.1
+params.heinz_fdr = 0.2
 
 params.hotnet2_heat_permutations = 1000
 params.hotnet2_fdr = 0.2
@@ -206,8 +206,8 @@ workflow {
                 }
         }
 
-        gene_assoc(pairs.snp_assoc, pairs.controls, params.gencode, params.genome, params.buffer, params.vegas2_params)
-        snp2gene(bfile[1], params.gencode, params.genome, params.buffer)
+        gene_assoc(pairs.snp_assoc, pairs.controls, params.gencode_version, params.genome_version, params.buffer, params.vegas2_params)
+        snp2gene(bfile[1], params.gencode_version, params.genome_version, params.buffer)
         dmgwas(gene_assoc.out, edgelist, params.dmgwas_d, params.dmgwas_r)
         heinz(gene_assoc.out, edgelist, params.heinz_fdr)
         hotnet2(gene_assoc.out, edgelist, params.hotnet2_fdr, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)

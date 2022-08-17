@@ -4,8 +4,8 @@ include { download_hgnc; download_gencode } from './snp2gene.nf'
 include { get_bfile } from './templates/utils.nf'
 
 params.buffer = 0
-params.gencode = 28
-params.genome = '38'
+params.gencode_version = 28
+params.genome_version = '38'
 params.snp_association = ''
 params.vegas2_params = ''
 
@@ -113,7 +113,7 @@ workflow vegas2_nf {
 
 workflow {
     main:
-        vegas2_nf(file(params.snp_association), bfile_ld_controls, params.gencode, params.genome, params.buffer, params.vegas2_params)
+        vegas2_nf(file(params.snp_association), bfile_ld_controls, params.gencode_version, params.genome_version, params.buffer, params.vegas2_params)
     emit:
         vegas2_nf.out
 }
