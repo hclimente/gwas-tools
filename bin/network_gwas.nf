@@ -17,15 +17,14 @@ params.splits = 5
 
 /// snp association
 bfile = get_bfile(params.bfile)
+params.covars = ''
 
 /// vegas2
+params.bfile_ld_controls = null
+params.buffer = 0
 params.gencode = 28
 params.genome = '38'
-params.covars = ''
-params.ld_controls = ''
-params.buffer = 0
-
-bfile_controls = get_bfile(params.bfile_controls)
+params.vegas2_params = ''
 
 /// edgelist selection
 params.edgelist = null
@@ -70,6 +69,20 @@ process split_data {
 
     script:
     template 'genotypes/train_test_split.sh'
+
+}
+
+process extract_controls {
+
+    input:
+        tuple path(BED), path(BIM), path(FAM)
+
+    output:
+        tuple val("${BED.getBaseName()}"), path("${BED.getBaseName()}.controls.bed"), path("${BED.getBaseName()}.controls.bim"), path("${BED.getBaseName()}.controls.fam")
+
+    """
+    plink -bfile ${BED.getBaseName()} -filter-controls -allow-no-sex -make-bed -out ${BED.getBaseName()}.controls
+    """
 
 }
 
@@ -172,7 +185,27 @@ workflow {
 
         split_data(bfile, 1..params.splits, params.splits)
         snp_assoc(split_data.out, params.covars)
-        gene_assoc(snp_assoc.out, bfile_controls, params.gencode, params.genome, params.buffer, '')
+
+        if (params.bfile_ld_controls == null) {
+            extract_controls(split_data.out)
+            controls = extract_controls.out
+                .map { it -> [it[0], [it[1], it[2], it[3]]] }
+            pairs = snp_assoc.out
+                .map { it -> [it.getBaseName(), it] }
+                .join(controls)
+                .multiMap { it ->
+                    snp_assoc: it[1]
+                    controls: it[2]
+                }
+        } else {
+            pairs = snp_assoc.out
+                .multiMap { it ->
+                    snp_assoc: it
+                    controls: get_bfile(params.bfile_ld_controls)
+                }
+        }
+
+        gene_assoc(pairs.snp_assoc, pairs.controls, params.gencode, params.genome, params.buffer, params.vegas2_params)
         snp2gene(bfile[1], params.gencode, params.genome, params.buffer)
         dmgwas(gene_assoc.out, edgelist, params.dmgwas_d, params.dmgwas_r)
         heinz(gene_assoc.out, edgelist, params.heinz_fdr)
