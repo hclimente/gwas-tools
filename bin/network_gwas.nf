@@ -22,7 +22,7 @@ params.covars = ''
 /// vegas2
 params.bfile_ld_controls = null
 params.buffer = 50000
-params.gencode_version = 28
+params.gencode_version = 41
 params.genome_version = '38'
 params.vegas2_params = ''
 

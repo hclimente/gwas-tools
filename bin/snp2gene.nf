@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-params.gencode_version = 28
+params.gencode_version = 41
 params.grch_version = '38'
 params.buffer = 50000
 
