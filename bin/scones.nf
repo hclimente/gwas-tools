@@ -6,9 +6,6 @@ include { get_bfile } from './templates/utils.nf'
 bfile = get_bfile(params.bfile)
 
 // SConES parameters
-params.snp2gene = null
-params.edgelist = null
-
 params.network = 'gs'
 params.score = 'chi2'
 params.criterion = 'consistency'
@@ -32,18 +29,64 @@ process read_bfile {
 
 }
 
-process make_snp_network {
+process make_gs_network {
 
     tag { RGWAS.getBaseName() }
 
     input:
-        path EDGELIST
-        val NET
-        path SNP2GENE
         path RGWAS
 
     output:
-        path 'net.RData'
+        tuple path(RGWAS), path("gs.RData")
+
+    """
+    #!/usr/bin/env Rscript
+    library(martini)
+
+    load("${RGWAS}")
+
+    net <- get_GS_network(gwas)
+    save(net, file = "gs.RData")
+    """
+
+}
+
+process make_gm_network {
+
+    tag { RGWAS.getBaseName() }
+
+    input:
+        path RGWAS
+        path SNP2GENE
+
+    output:
+        tuple path(RGWAS), path("gm.RData")
+
+    """
+    #!/usr/bin/env Rscript
+    library(martini)
+    library(tidyverse)
+
+    load("${RGWAS}")
+
+    net <- get_GM_network(gwas,
+                          snpMapping = read_tsv("${SNP2GENE}"))
+    save(net, file = "gm.RData")
+    """
+
+}
+
+process make_gi_network {
+
+    tag { RGWAS.getBaseName() }
+
+    input:
+        path RGWAS
+        path SNP2GENE
+        path EDGELIST
+
+    output:
+        tuple path(RGWAS), path("gi.RData")
 
     """
     #!/usr/bin/env Rscript
@@ -52,32 +95,22 @@ process make_snp_network {
     library(igraph)
 
     load("${RGWAS}")
-    netType <- "${NET}"
-
-    if (netType == "gs") {
-        net <- get_GS_network(gwas)
-    } else if (netType %in% c('gm', 'gi')) {
-        snp2gene <- read_tsv("${SNP2GENE}")
-        if (netType == "gm") {
-            net <- get_GM_network(gwas, snpMapping = snp2gene)
-        } else if (netType == "gi") {
-            net <- get_GI_network(gwas, snpMapping = snp2gene, ppi = read_tsv("${EDGELIST}"))
-        }
-    } else {
-        stop("network type not recognized.")
-    }
-
-    save(net, file = "net.RData")
+    
+    net <- get_GI_network(gwas,
+                          snpMapping = read_tsv("${SNP2GENE}"),
+                          ppi = read_tsv("${EDGELIST}"))
+    save(net, file = "gi.RData")
     """
+
 }
 
-process scones {
+process scones_new {
+
 
     tag { RGWAS.getBaseName() }
 
     input:
-        path RGWAS
-        path RNET
+        tuple path(RGWAS), path(RNET)
         val SCORE
         val CRITERION
 
@@ -89,13 +122,12 @@ process scones {
 
 }
 
-process scones_old {
+process scones {
 
     tag { RGWAS.getBaseName() }
 
     input:
-        path RGWAS
-        path RNET
+        tuple path(RGWAS), path(RNET)
         val SCORE
         val CRITERION
 
@@ -107,13 +139,12 @@ process scones_old {
 
 }
 
-process parametrized_scones_old {
+process parametrized_scones {
 
     tag { RGWAS.getBaseName() }
 
     input:
-        path RGWAS
-        path RNET
+        tuple path(RGWAS), path(RNET)
         val SCORE
         val CRITERION
         val ETA
@@ -127,7 +158,7 @@ process parametrized_scones_old {
 
 }
 
-workflow scones_old_nf {
+workflow scones_nf {
     take:
         bfile
         edgelist
@@ -138,24 +169,36 @@ workflow scones_old_nf {
         eta
         lambda
     main:
-        snp2gene = (network == 'gm' | network == 'gi') ? snp2gene : null
-        edgelist = (network == 'gi') ? edgelist : null
-
         read_bfile(bfile)
-        make_snp_network(edgelist, network, snp2gene, read_bfile.out)
+
+        switch(network) {
+            case 'gs':
+                make_gs_network(read_bfile.out)
+                net = make_gs_network.out
+                break
+            case 'gm':
+                net = make_gm_network(read_bfile.out, snp2gene)
+                net = make_gm_network.out
+                break
+            case 'gi':
+                net = make_gi_network(read_bfile.out, snp2gene, edgelist)
+                net = make_gi_network.out
+                break
+        }
+
 
         if (eta == null | lambda == null) {
-            scones_old(read_bfile.out, make_snp_network.out, score, criterion)
-            out = scones_old.out
+            scones(net, score, criterion)
+            out = scones.out
         } else {
-            parametrized_scones_old(read_bfile.out, make_snp_network.out, score, criterion, eta, lambda)
-            out = parametrized_scones_old.out
+            parametrized_scones(net, score, criterion, eta, lambda)
+            out = parametrized_scones.out
         }
     emit:
         out
 }
 
-workflow scones_nf {
+workflow scones_new_nf {
     take:
         bfile
         edgelist
@@ -176,7 +219,7 @@ workflow scones_nf {
 
 workflow {
     main:
-        scones_old_nf(bfile, params.edgelist, params.network, params.snp2gene, params.score, params.criterion, params.eta, params.lambda)
+        scones_nf(bfile, file(params.edgelist), params.network, file(params.snp2gene), params.score, params.criterion, params.eta, params.lambda)
     emit:
-        scones_old_nf.out
+        scones_nf.out
 }
