@@ -1,7 +1,7 @@
 ###############################
 # GLOBALS
 CONDA_ENV = ./env/
-CONDA_ACTIVATE = eval "$$(conda shell.bash hook)"; conda activate gwas-tools 
+CONDA_ACTIVATE = eval "$$(conda shell.bash hook)"; conda activate gwas-tools
 SHELL=bash
 
 .PHONY: $(CONDA_ENV) clean conda docker setup
@@ -17,11 +17,12 @@ $(CONDA_ENV): environment.yml
 conda: environment.yml
 	mamba env create --force --file environment.yml
 	$(CONDA_ACTIVATE); bash nonconda_deps.sh
-	mv vegas2v2 bin/
+	$(CONDA_ACTIVATE); bash extra_deps.sh
+	mv vegas2v2 gtool impute2 mbmdr AntEpiSeeker bin/
 
 docker:
 	docker build -t hclimente/gwas-tools .
-	docker build -t hclimente/gwas-tools-extra - <Dockerfile_extra
+	docker build -t hclimente/gwas-tools-extra -f Dockerfile_extra .
 
 clean:
 	rm -rf env/
