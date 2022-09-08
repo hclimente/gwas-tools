@@ -10,8 +10,8 @@ RUN mkdir /tools
 ENV PATH="/tools:${PATH}"
 WORKDIR /tools
 
-COPY extra_deps.sh .
-RUN bash extra_deps.sh && rm extra_deps.sh
+COPY nonconda_deps.sh .
+RUN bash nonconda_deps.sh && rm nonconda_deps.sh
 
 # set up workdir
 RUN mkdir /work

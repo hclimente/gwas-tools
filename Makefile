@@ -16,7 +16,7 @@ $(CONDA_ENV): environment.yml
 
 conda: environment.yml
 	mamba env create --force --file environment.yml
-	$(CONDA_ACTIVATE); bash extra_deps.sh
+	$(CONDA_ACTIVATE); bash nonconda_deps.sh
 	mv vegas2v2 bin/
 
 docker:
