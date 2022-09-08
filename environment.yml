@@ -15,15 +15,13 @@ dependencies:
   # R
   - bioconductor-bionet
   - bioconductor-martini
-  - r
+  - r-base=4
   - r-biglasso
   - r-bigmemory
   - r-biocmanager
-  - r-CASMAP
   - r-corpcor
   - r-domc
   - r-igraph
-  - r-LEANR
   - r-magrittr
   - r-mvtnorm
   - r-ranger
@@ -33,5 +31,6 @@ dependencies:
   - gawk
   - sed
   - tar
+  - nextflow
   - unzip
   - wget 
