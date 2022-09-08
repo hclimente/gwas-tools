@@ -34,11 +34,12 @@ params.dmgwas_d = 2
 
 params.heinz_fdr = 0.2
 
+params.with_hotnet2 = false
 params.hotnet2_heat_permutations = 1000
 params.hotnet2_fdr = 0.2
 params.hotnet2_network_permutations = 100
 
-params.scones_criterion = 'consistency'
+params.scones_criterion = 'stability'
 params.scones_network = 'gi'
 params.scones_score = 'chi2'
 
@@ -210,14 +211,19 @@ workflow {
         snp2gene(bfile[1], params.gencode_version, params.genome_version, params.buffer)
         dmgwas(gene_assoc.out, edgelist, params.dmgwas_d, params.dmgwas_r)
         heinz(gene_assoc.out, edgelist, params.heinz_fdr)
-        hotnet2(gene_assoc.out, edgelist, params.hotnet2_fdr, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
         lean(gene_assoc.out, edgelist)
         scones(split_data.out, edgelist, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
         scones_genes(scones.out, snp2gene.out)
         sigmod(gene_assoc.out, edgelist, params.sigmod_lambdamax, params.sigmod_nmax, params.sigmod_maxjump)
 
         outputs = dmgwas.out
-            .mix(heinz.out, hotnet2.out, lean.out, scones_genes.out, sigmod.out)
+            .mix(heinz.out, lean.out, scones_genes.out, sigmod.out)
+
+        if (params.with_hotnet2) {
+            hotnet2(gene_assoc.out, edgelist, params.hotnet2_fdr, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
+            output = output.mix(hotnet2.out)
+        }
+
         standardize_outputs(outputs)
         build_consensus(standardize_outputs.out.collect())
     emit:

@@ -104,7 +104,7 @@ process make_gi_network {
 
 }
 
-process scones_new {
+process scones {
 
 
     tag { RGWAS.getBaseName() }
@@ -119,23 +119,6 @@ process scones_new {
 
     script:
     template 'discovery/scones.R'
-
-}
-
-process scones {
-
-    tag { RGWAS.getBaseName() }
-
-    input:
-        tuple path(RGWAS), path(RNET)
-        val SCORE
-        val CRITERION
-
-    output:
-        path "${RGWAS.getBaseName()}.scones.tsv"
-
-    script:
-    template 'discovery/scones_old.R'
 
 }
 
@@ -154,7 +137,7 @@ process parametrized_scones {
         path "${RGWAS.getBaseName()}.scones.tsv"
 
     script:
-    template 'discovery/scones_params_old.R'
+    template 'discovery/scones_params.R'
 
 }
 
