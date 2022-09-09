@@ -29,5 +29,5 @@ cones <- scones.cv(gwas, net,
                    etas = etas,
                    lambdas = lambdas)
 
-tibble(snp = V(cones)) %>%
+tibble(snp = names(V(cones))) %>%
     write_tsv('${RGWAS.getBaseName()}.scones.tsv')

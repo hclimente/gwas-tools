@@ -21,4 +21,4 @@ results <- run.lean(scores, net, n_reps = 10000,
 as_tibble(results\$restab) %>%
     mutate(gene = rownames(results\$restab)) %>%
     select(gene, everything()) %>%
-    write_tsv('scored_genes.lean.txt')
+    write_tsv('${SCORES.getBaseName()}.lean.tsv')

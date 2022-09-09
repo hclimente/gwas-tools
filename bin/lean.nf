@@ -2,6 +2,7 @@
 
 process lean {
 
+    publishDir params.out, mode: 'copy'
     tag { SCORES.getBaseName() }
 
     input:
@@ -9,7 +10,7 @@ process lean {
         path EDGELIST
 
     output:
-        path 'scored_genes.lean.txt'
+        path "${SCORES.getBaseName()}.lean.tsv"
 
     script:
     template 'discovery/leanr.R'

@@ -1,10 +1,12 @@
 #!/usr/bin/env nextflow
 
 params.r = 0.1
+params.out = '.'
 params.d = 2
 
 process dmgwas {
 
+    publishDir params.out, mode: 'copy'
     tag { SCORES.getBaseName() }
 
     input:
@@ -14,7 +16,7 @@ process dmgwas {
         val R
 
     output:
-        file 'selected_genes.dmgwas.txt'
+        path "${SCORES.getBaseName()}.dmgwas.txt"
 
     """
     #!/usr/bin/env Rscript
@@ -32,7 +34,7 @@ process dmgwas {
     top <- simpleChoose(modules)
 
     tibble(gene = names(V(top\$subnetwork))) %>%
-        write_tsv('selected_genes.dmgwas.txt')
+        write_tsv("${SCORES.getBaseName()}.dmgwas.txt")
     """
 
 }

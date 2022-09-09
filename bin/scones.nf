@@ -2,6 +2,8 @@
 
 include { get_bfile } from './templates/utils.nf'
 
+params.out = '.'
+
 // gwas
 bfile = get_bfile(params.bfile)
 
@@ -106,7 +108,7 @@ process make_gi_network {
 
 process scones {
 
-
+    publishDir params.out, mode: 'copy'
     tag { RGWAS.getBaseName() }
 
     input:
@@ -179,25 +181,6 @@ workflow scones_nf {
         }
     emit:
         out
-}
-
-workflow scones_new_nf {
-    take:
-        bfile
-        edgelist
-        network
-        snp2gene
-        score
-        criterion
-    main:
-        snp2gene = (network == 'gm' | network == 'gi') ? snp2gene : null
-        edgelist = (network == 'gi') ? edgelist : null
-
-        read_bfile(bfile)
-        make_snp_network(edgelist, network, snp2gene, read_bfile.out)
-        scones(read_bfile.out, make_snp_network.out, score, criterion)
-    emit:
-        scones.out
 }
 
 workflow {

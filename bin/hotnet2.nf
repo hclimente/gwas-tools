@@ -107,13 +107,15 @@ process hotnet2 {
 
 process process_output {
 
+    publishDir params.out, mode: 'copy'
     tag { SUBNETWORKS.getBaseName() }
 
     input:
+        path SCORES
         path SUBNETWORKS
 
     output:
-        path 'selected_genes.hotnet2.tsv'
+        path "${SCORES.getBaseName()}.hotnet2.tsv"
 
     """
 #!/usr/bin/env Rscript
@@ -125,7 +127,7 @@ read_tsv('${SUBNETWORKS}', col_types = 'cc', skip = 1) %>%
     select(gene) %>%
     mutate(cluster = ifelse(n() > 0, 1:n(), 0)) %>%
     separate_rows(gene, sep = ' ') %>%
-    write_tsv('selected_genes.hotnet2.tsv')
+    write_tsv('${SCORES.getBaseName()}.hotnet2.tsv')
     """
 
 }

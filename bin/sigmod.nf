@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+params.out = '.'
+
 // sigmod params
 params.lambdamax = 1
 params.nmax = 300
@@ -17,6 +19,7 @@ process download_sigmod {
 
 process sigmod {
 
+    publishDir params.out, mode: 'copy'
     tag { SCORES.getBaseName() }
 
     input:
@@ -28,7 +31,7 @@ process sigmod {
         path SIGMOD_PATH
 
     output:
-        path 'selected_genes.sigmod.txt'
+        path "${SCORES.getBaseName()}.sigmod.txt"
 
     script:
     template 'discovery/sigmod.R'

@@ -5,6 +5,7 @@ params.fdr = 0.1
 
 process heinz {
 
+    publishDir params.out, mode: 'copy'
     tag { SCORES.getBaseName() }
 
     input:
@@ -13,7 +14,7 @@ process heinz {
         val FDR
 
     output:
-        file 'selected_genes.heinz.txt' 
+        path "${SCORES.getBaseName()}.heinz.txt"
 
     """
     #!/usr/bin/env Rscript
@@ -37,9 +38,10 @@ process heinz {
     if (sum(scores > 0)) {
         selected <- runFastHeinz(net, scores)    
     	tibble(gene = names(V(selected))) %>% 
-            write_tsv('selected_genes.heinz.txt')
+            write_tsv("${SCORES.getBaseName()}.heinz.txt")
     } else {
-        write_tsv(tibble(gene = character()), 'selected_genes.heinz.txt')
+        tibble(gene = character()) %>% 
+            write_tsv("${SCORES.getBaseName()}.heinz.txt")
     }
     """
 
