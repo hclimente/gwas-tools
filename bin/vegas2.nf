@@ -3,6 +3,7 @@
 include { download_hgnc; download_gencode } from './snp2gene.nf'
 include { get_bfile } from './templates/utils.nf'
 
+params.bfile_ld_controls = null
 params.buffer = 0
 params.gencode_version = 28
 params.genome_version = '38'
