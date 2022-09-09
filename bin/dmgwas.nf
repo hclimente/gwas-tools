@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
-params.r = 0.1
 params.out = '.'
+params.r = 0.1
 params.d = 2
 
 process dmgwas {
