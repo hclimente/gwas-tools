@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+params.out = '.'
+
 process lean {
 
     publishDir params.out, mode: 'copy'

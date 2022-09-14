@@ -40,7 +40,7 @@ Then, simply add '*-with-docker hclimente/gwas-tools[-extra]*' or '*-with-singul
 <a name="data_preprocessing"></a>
 
 - Impute a dataset: `impute --bfile test/data/example --strand_info test/data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools`
-- Run VEGAS2: `vegas2.nf --bfile test/data/example --gencode 31 --genome 37 --buffer 50000 --vegas_params '-top 10' -with-docker hclimente/gwas-tools`
+- Run VEGAS2: `vegas2.nf --snp_association test/data/assoc.chisq --bfile_ld_controls test/data/example --vegas_params '-top 10' -with-docker hclimente/gwas-tools`
 - Map SNPs to GENCODE genes: `snp2gene.nf --bim test/data/example.map --genome GRCh38 -with-docker hclimente/gwas-tools`
 
 ### Network-guided GWAS
@@ -52,12 +52,12 @@ We adapted and benchmarked multiple algorithms for the detection of SNPs associa
 
 The available methods are:
 
-- dmGWAS: `dmgwas.nf --vegas scored_genes.top10.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
-- heinz: `heinz.nf --vegas scored_genes.top10.txt --edgelist test/data/interactions.tsv --fdr 0.5 -with-docker hclimente/gwas-tools`
-- HotNet2: `hotnet2.nf --scores test/data/scored_genes.vegas.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools-extra`
-- LEAN: `lean.nf --vegas scored_genes.top10.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
+- dmGWAS: `dmgwas.nf --scores test/data/scored_genes.vegas.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
+- heinz: `heinz.nf --scores test/data/scored_genes.vegas.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
+- HotNet2: `hotnet2.nf --scores test/data/scored_genes.vegas.txt --edgelist test/data/interactions.tsv --network_permutations 2 --heat_permutations 2 -with-docker hclimente/gwas-tools-extra`
+- LEAN: `lean.nf --scores test/data/scored_genes.vegas.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
 - SConES: `scones.nf --bfile test/data/example --network gi --snp2gene test/data/snp2gene.tsv --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
-- Sigmod: `sigmod.nf --sigmod SigMod_v2 --vegas scored_genes.top10.txt --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
+- Sigmod: `sigmod.nf --scores test/data/scored_genes.vegas.txt --edgelist test/data/interactions.tsv --nmax 1 --maxjump 1 --lambdamax 2 -with-docker hclimente/gwas-tools`
 
 ## Epistasis detection
 

@@ -143,7 +143,7 @@ workflow hotnet2_nf {
         make_network(edgelist, beta, network_permutations)
         compute_heat(scores, fdr)
         hotnet2(make_network.out, compute_heat.out, beta, network_permutations, heat_permutations)
-        process_output(hotnet2.out)
+        process_output(scores, hotnet2.out)
     emit:
         process_output.out
 }

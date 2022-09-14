@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+params.out = '.'
+
 include { get_bfile } from './templates/utils.nf'
 
 // gwas
@@ -9,6 +11,7 @@ params.covars = ''
 
 process chisquare_test {
     
+    publishDir params.out, mode: 'copy'
     tag { BED.getBaseName() }
 
     input:
@@ -27,6 +30,7 @@ process chisquare_test {
 
 process adjusted_logistic_regression {
 
+    publishDir params.out, mode: 'copy'
     tag { BED.getBaseName() }
 
     input:

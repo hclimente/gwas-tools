@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+params.out = '.'
+
 include { download_hgnc; download_gencode } from './snp2gene.nf'
 include { get_bfile } from './templates/utils.nf'
 
@@ -55,7 +57,8 @@ process vegas2 {
 }
 
 process merge_chromosomes {
-
+    
+    publishDir params.out, mode: 'copy'
     tag { KEY }
 
     input:
@@ -114,7 +117,9 @@ workflow vegas2_nf {
 
 workflow {
     main:
-        vegas2_nf(file(params.snp_association), bfile_ld_controls, params.gencode_version, params.genome_version, params.buffer, params.vegas2_params)
+        snp_association = Channel.fromPath(params.snp_association)
+
+        vegas2_nf(snp_association, bfile_ld_controls, params.gencode_version, params.genome_version, params.buffer, params.vegas2_params)
     emit:
         vegas2_nf.out
 }

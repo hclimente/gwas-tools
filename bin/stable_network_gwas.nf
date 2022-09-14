@@ -213,17 +213,15 @@ workflow {
 
         gene_assoc(pairs.snp_assoc, pairs.controls, params.gencode_version, params.genome_version, params.buffer, params.vegas2_params)
         snp2gene(bfile[1], params.gencode_version, params.genome_version, params.buffer)
-        /* dmgwas(gene_assoc.out, edgelist, params.dmgwas_d, params.dmgwas_r) */
+        dmgwas(gene_assoc.out, edgelist, params.dmgwas_d, params.dmgwas_r)
         heinz(gene_assoc.out, edgelist, params.heinz_fdr)
         lean(gene_assoc.out, edgelist)
         scones(split_data.out, edgelist, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
         scones_genes(scones.out, snp2gene.out)
         sigmod(gene_assoc.out, edgelist, params.sigmod_lambdamax, params.sigmod_nmax, params.sigmod_maxjump)
 
-        /* outputs = dmgwas.out */
-        /*     .mix(heinz.out, lean.out, scones_genes.out, sigmod.out) */
-        outputs = heinz.out
-            .mix(lean.out, scones_genes.out, sigmod.out)
+        outputs = dmgwas.out
+            .mix(heinz.out, lean.out, scones_genes.out, sigmod.out)
 
         if (params.with_hotnet2) {
             hotnet2(gene_assoc.out, edgelist, params.hotnet2_fdr, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
