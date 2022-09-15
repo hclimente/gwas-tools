@@ -121,6 +121,8 @@ process scones_genes {
 
 process standardize_outputs {
 
+    tag { OUT }
+
     input:
         path OUT
 
@@ -144,10 +146,13 @@ process standardize_outputs {
 
     selected %>%
         mutate(method = sub(paste0('.', ext), '', '${OUT}'),
-               method = sub('[^.]+.', '', method)) %>%
+               method = sub('[^.]+.', '', method),
+               method = sub('vegas2.', '', method),
+               method = sub('.genes', '', method)) %>%
         select(gene, method) %>%
         write_tsv('standardized.tsv')
     """
+
 }
 
 process build_consensus {

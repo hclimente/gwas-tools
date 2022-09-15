@@ -57,7 +57,7 @@ The available methods are:
 - HotNet2: `hotnet2.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv --network_permutations 2 --heat_permutations 2 -with-docker hclimente/gwas-tools-extra`
 - LEAN: `lean.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv -with-docker hclimente/gwas-tools`
 - SConES: `scones.nf --bfile test/data/gwas --network gi --snp2gene test/data/snp2gene.tsv --edgelist test/data/edgelist.tsv -with-docker hclimente/gwas-tools`
-- Sigmod: `sigmod.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv --nmax 1 --maxjump 1 --lambdamax 2 -with-docker hclimente/gwas-tools`
+- Sigmod: `sigmod.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv --nmax 13 --maxjump 1 -with-docker hclimente/gwas-tools`
 
 ### Network-guided GWAS using stability selection
 <a name="stable_network_gwas"></a>
@@ -71,10 +71,9 @@ Usage:
 ```bash
 stable_network_gwas.nf \
     --bfile test/data/gwas \
-    --edgelist test/data/edgelist_genes.tsv \
-    --sigmod_nmax 1 \
+    --edgelist test/data/edgelist.tsv \
+    --sigmod_nmax 13 \
     --sigmod_maxjump 1 \
-    --sigmod_lambdamax 2 \
     -with-docker hclimente/gwas-tools
 ```
 
