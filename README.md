@@ -39,9 +39,9 @@ Then, simply add '*-with-docker hclimente/gwas-tools[-extra]*' or '*-with-singul
 ### Data preprocessing
 <a name="data_preprocessing"></a>
 
-- Impute a dataset: `impute --bfile test/data/example --strand_info test/data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools`
-- Run VEGAS2: `vegas2.nf --snp_association test/data/assoc.chisq --bfile_ld_controls test/data/example --vegas_params '-top 10' -with-docker hclimente/gwas-tools`
-- Map SNPs to GENCODE genes: `snp2gene.nf --bim test/data/example.bim -with-docker hclimente/gwas-tools`
+- Impute a dataset: `impute --bfile test/data/gwas --strand_info test/data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools`
+- Run VEGAS2: `vegas2.nf --snp_association test/data/assoc.chisq --bfile_ld_controls test/data/gwas --vegas_params '-top 10' -with-docker hclimente/gwas-tools`
+- Map SNPs to GENCODE genes: `snp2gene.nf --bim test/data/gwas.bim -with-docker hclimente/gwas-tools`
 
 ### Network-guided GWAS
 <a name="network_gwas"></a>
@@ -52,12 +52,12 @@ We adapted and benchmarked multiple algorithms for the detection of SNPs associa
 
 The available methods are:
 
-- dmGWAS: `dmgwas.nf --scores test/data/scored_genes.vegas.tsv --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
-- heinz: `heinz.nf --scores test/data/scored_genes.vegas.tsv --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
-- HotNet2: `hotnet2.nf --scores test/data/scored_genes.vegas.tsv --edgelist test/data/interactions.tsv --network_permutations 2 --heat_permutations 2 -with-docker hclimente/gwas-tools-extra`
-- LEAN: `lean.nf --scores test/data/scored_genes.vegas.tsv --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
-- SConES: `scones.nf --bfile test/data/example --network gi --snp2gene test/data/snp2gene.tsv --edgelist test/data/interactions.tsv -with-docker hclimente/gwas-tools`
-- Sigmod: `sigmod.nf --scores test/data/scored_genes.vegas.tsv --edgelist test/data/interactions.tsv --nmax 1 --maxjump 1 --lambdamax 2 -with-docker hclimente/gwas-tools`
+- dmGWAS: `dmgwas.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv -with-docker hclimente/gwas-tools`
+- heinz: `heinz.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv -with-docker hclimente/gwas-tools`
+- HotNet2: `hotnet2.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv --network_permutations 2 --heat_permutations 2 -with-docker hclimente/gwas-tools-extra`
+- LEAN: `lean.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv -with-docker hclimente/gwas-tools`
+- SConES: `scones.nf --bfile test/data/gwas --network gi --snp2gene test/data/snp2gene.tsv --edgelist test/data/edgelist.tsv -with-docker hclimente/gwas-tools`
+- Sigmod: `sigmod.nf --scores test/data/vegas2.tsv --edgelist test/data/edgelist.tsv --nmax 1 --maxjump 1 --lambdamax 2 -with-docker hclimente/gwas-tools`
 
 ### Network-guided GWAS using stability selection
 <a name="stable_network_gwas"></a>
@@ -70,8 +70,8 @@ Usage:
 
 ```bash
 stable_network_gwas.nf \
-    --bfile test/data/example \
-    --edgelist test/data/interactions.tsv \
+    --bfile test/data/gwas \
+    --edgelist test/data/edgelist.tsv \
     --sigmod_nmax 1 \
     --sigmod_maxjump 1 \
     --sigmod_lambdamax 2 \
@@ -91,8 +91,8 @@ Usage:
 
 ```bash
 network_epistasis.nf \
-    --bfile ../test/data/example \
-    --tab2 ../test/data/interactions.tab2 \
-    --snp2gene ../test/data/snp2gene.tsv \
+    --bfile test/data/gwas \
+    --tab2  test/data/interactions.tab2 \
+    --snp2gene test/data/snp2gene.tsv \
     --nperm 10
 ```
