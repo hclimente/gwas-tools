@@ -71,7 +71,7 @@ Usage:
 ```bash
 stable_network_gwas.nf \
     --bfile test/data/gwas \
-    --edgelist test/data/edgelist.tsv \
+    --edgelist test/data/edgelist_genes.tsv \
     --sigmod_nmax 1 \
     --sigmod_maxjump 1 \
     --sigmod_lambdamax 2 \
