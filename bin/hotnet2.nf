@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+params.out = '.'
+
 params.network_permutations = 100
 params.heat_permutations = 1000
 beta = 0.4

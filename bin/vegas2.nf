@@ -7,7 +7,7 @@ include { get_bfile } from './templates/utils.nf'
 
 params.bfile_ld_controls = null
 params.buffer = 0
-params.gencode_version = 28
+params.gencode_version = 41
 params.genome_version = '38'
 params.snp_association = ''
 params.vegas2_params = ''

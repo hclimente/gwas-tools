@@ -21,11 +21,13 @@ params.splits = 5
 bfile = get_bfile(params.bfile)
 params.covars = ''
 
-/// vegas2
-params.bfile_ld_controls = null
+/// snp-to-gene mapping
 params.buffer = 50000
 params.gencode_version = 41
 params.genome_version = '38'
+
+/// vegas2
+params.vegas2_bfile_ld_controls = null
 params.vegas2_params = ''
 
 /// network selection
@@ -192,7 +194,7 @@ workflow {
         split_data(bfile, 1..params.splits, params.splits)
         snp_assoc(split_data.out, params.covars)
 
-        if (params.bfile_ld_controls == null) {
+        if (params.vegas2_bfile_ld_controls == null) {
             extract_controls(split_data.out)
             controls = extract_controls.out
                 .map { it -> [it[0], [it[1], it[2], it[3]]] }
@@ -207,7 +209,7 @@ workflow {
             pairs = snp_assoc.out
                 .multiMap { it ->
                     snp_assoc: it
-                    controls: get_bfile(params.bfile_ld_controls)
+                    controls: get_bfile(params.vegas2_bfile_ld_controls)
                 }
         }
 

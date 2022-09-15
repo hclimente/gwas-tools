@@ -22,7 +22,8 @@ process dmgwas {
     #!/usr/bin/env Rscript
 
     library(dmGWAS)
-    library(tidyverse)
+    library(readr)
+    library(dplyr)
 
     scores <- read_tsv('${SCORES}') %>% 
         select(Gene, Pvalue) %>%
