@@ -10,7 +10,7 @@ bfile = get_bfile(params.bfile)
 // SConES parameters
 params.network = 'gs'
 params.score = 'chi2'
-params.criterion = 'consistency'
+params.criterion = 'stability'
 params.encoding = 'additive'
 params.eta = null
 params.lambda = null

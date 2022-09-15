@@ -1,7 +1,9 @@
 #!/usr/bin/env nextflow
 
+params.out = '.'
+
 params.gencode_version = 41
-params.grch_version = '38'
+params.genome_version = '38'
 params.buffer = 50000
 
 process download_hgnc {
@@ -78,6 +80,8 @@ process map_snps_to_genes {
 
 process ensembl2hgnc {
 
+    publishDir params.out, mode: 'copy'
+
 	input:
 		path snp2ensembl
 		path hgnc
@@ -105,11 +109,11 @@ workflow snp2gene_nf {
     take:
         bim
         gencode_version
-        grch_version
+        genome_version
         buffer
     main:
         download_hgnc()
-        download_gencode(gencode_version, grch_version)
+        download_gencode(gencode_version, genome_version)
         gff2bed(download_gencode.out, buffer)
         bim2bed(bim)
         map_snps_to_genes(bim2bed.out, gff2bed.out)
@@ -120,7 +124,7 @@ workflow snp2gene_nf {
 
 workflow {
     main:
-        snp2gene_nf(file(params.bim), params.gencode_version, params.grch_version, params.buffer)
+        snp2gene_nf(file(params.bim), params.gencode_version, params.genome_version, params.buffer)
     emit:
         snp2gene_nf.out
 }
