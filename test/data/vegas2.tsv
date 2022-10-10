@@ -1,4 +1,4 @@
-Chr	Gene	nSNPs	nSims	Start	Stop	Test	Pvalue	Best-SNP	SNP-pvalue
+Chr	gene	nSNPs	nSims	Start	Stop	Test	pvalue	Best-SNP	SNP-pvalue
 22	MAPK1	1	0	0	0	0	9.99999000001e-7	-	0
 22	CHEK2	1	0	0	0	0	9.99999000001e-7	-	0
 22	RBX1	1	0	0	0	0	9.99999000001e-7	-	0

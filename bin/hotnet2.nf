@@ -62,10 +62,10 @@ library(tidyverse)
 
 read_tsv('${SCORES}') %>%
     # sparsify scores
-    mutate(padj = p.adjust(Pvalue, method = "fdr"),
-           p = ifelse(padj < ${CUTOFF}, Pvalue, 1), 
+    mutate(padj = p.adjust(pvalue, method = "fdr"),
+           p = ifelse(padj < ${CUTOFF}, pvalue, 1), 
            score = -log10(p)) %>%
-    select(Gene, score) %>%
+    select(gene, score) %>%
     write_tsv('scores.ht', col_names = FALSE)
 code
 

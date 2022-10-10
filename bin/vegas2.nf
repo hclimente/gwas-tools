@@ -82,6 +82,7 @@ process merge_chromosomes {
         inner_join(ensembl2hgnc, by = c("Gene" = "ensembl_gene_id")) %>%
         mutate(Gene = symbol) %>%
         select(-symbol) %>%
+        rename(gene = Gene, pvalue = Pvalue) %>%
         write_tsv('${KEY}.vegas2.tsv')
     """
 

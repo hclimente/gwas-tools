@@ -27,11 +27,11 @@ process heinz {
     net <- read_tsv("${EDGELIST}") %>%
         filter(gene1 %in% vegas\$Gene & gene2 %in% vegas\$Gene) %>%
         graph_from_data_frame(directed = FALSE)
-    vegas <- filter(vegas, Gene %in% names(V(net)))
+    vegas <- filter(vegas, gene %in% names(V(net)))
 
     # search subnetworks
-    pvals <- vegas\$Pvalue
-    names(pvals) <- vegas\$Gene
+    pvals <- vegas\$pvalue
+    names(pvals) <- vegas\$gene
     fb <- fitBumModel(pvals, plot = FALSE)
     scores <- scoreNodes(net, fb, fdr = ${FDR})
 

@@ -26,8 +26,8 @@ process dmgwas {
     library(dplyr)
 
     scores <- read_tsv('${SCORES}') %>% 
-        select(Gene, Pvalue) %>%
-        mutate(Pvalue = ifelse(Pvalue == 1, 0.99999, Pvalue)) %>%
+        select(gene, pvalue) %>%
+        mutate(pvalue = ifelse(pvalue == 1, 0.99999, pvalue)) %>%
         as.data.frame
     net <- read_tsv('${EDGELIST}')
 

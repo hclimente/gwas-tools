@@ -119,7 +119,36 @@ process scones_genes {
 
 }
 
-process standardize_outputs {
+process fix_inputs {
+
+    tag { VEGAS2.getBaseName() }
+
+    input:
+        path VEGAS2
+
+    output:
+        path "${VEGAS2.getBaseName()}.fixed.tsv"
+        
+
+    """
+    #!/usr/bin/env Rscript
+
+    library(tidyverse)
+
+    vegas <- read_tsv("$VEGAS2")
+
+    if (any(grepl("^Top-", colnames(vegas)))) {
+        vegas <- select(vegas, -Pvalue) %>%
+            rename_with(function(x) { "pvalue" }, starts_with("Top-"))
+    }
+
+    vegas %>%
+        write_tsv("${VEGAS2.getBaseName()}.fixed.tsv")
+    """
+
+}
+
+process fix_outputs {
 
     tag { OUT }
 
@@ -127,7 +156,7 @@ process standardize_outputs {
         path OUT
 
     output:
-        path "standardized.tsv"
+        path "fixed.tsv"
 
     """
     #!/usr/bin/env Rscript
@@ -150,7 +179,7 @@ process standardize_outputs {
                method = sub('vegas2.', '', method),
                method = sub('.genes', '', method)) %>%
         select(gene, method) %>%
-        write_tsv('standardized.tsv')
+        write_tsv('fixed.tsv')
     """
 
 }
@@ -219,24 +248,25 @@ workflow {
         }
 
         gene_assoc(pairs.snp_assoc, pairs.controls, params.gencode_version, params.genome_version, params.buffer, params.vegas2_params)
+        fix_inputs(gene_assoc.out)
         snp2gene(bfile[1], params.gencode_version, params.genome_version, params.buffer)
-        dmgwas(gene_assoc.out, edgelist, params.dmgwas_d, params.dmgwas_r)
-        heinz(gene_assoc.out, edgelist, params.heinz_fdr)
-        lean(gene_assoc.out, edgelist)
+        dmgwas(fix_inputs.out, edgelist, params.dmgwas_d, params.dmgwas_r)
+        heinz(fix_inputs.out, edgelist, params.heinz_fdr)
+        lean(fix_inputs.out, edgelist)
         scones(split_data.out, edgelist, params.scones_network, snp2gene.out, params.scones_score, params.scones_criterion, null, null)
         scones_genes(scones.out, snp2gene.out)
-        sigmod(gene_assoc.out, edgelist, params.sigmod_lambdamax, params.sigmod_nmax, params.sigmod_maxjump)
+        sigmod(fix_inputs.out, edgelist, params.sigmod_lambdamax, params.sigmod_nmax, params.sigmod_maxjump)
 
         outputs = dmgwas.out
             .mix(heinz.out, lean.out, scones_genes.out, sigmod.out)
 
         if (params.with_hotnet2) {
-            hotnet2(gene_assoc.out, edgelist, params.hotnet2_fdr, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
+            hotnet2(fix_inputs.out, edgelist, params.hotnet2_fdr, params.hotnet2_network_permutations, params.hotnet2_heat_permutations)
             output = output.mix(hotnet2.out)
         }
 
-        standardize_outputs(outputs)
-        build_consensus(standardize_outputs.out.collect())
+        fix_outputs(outputs)
+        build_consensus(fix_outputs.out.collect())
     emit:
         build_consensus.out
 }
