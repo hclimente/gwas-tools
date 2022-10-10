@@ -176,7 +176,7 @@ process fix_outputs {
     selected %>%
         mutate(method = sub(paste0('.', ext), '', '${OUT}'),
                method = sub('[^.]+.', '', method),
-               method = sub('vegas2.', '', method),
+               method = sub('vegas2.fixed.', '', method),
                method = sub('.genes', '', method)) %>%
         select(gene, method) %>%
         write_tsv('fixed.tsv')
