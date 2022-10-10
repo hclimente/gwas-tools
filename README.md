@@ -40,7 +40,7 @@ Then, simply add '*-with-docker hclimente/gwas-tools[-extra]*' or '*-with-singul
 <a name="data_preprocessing"></a>
 
 - Impute a dataset: `impute --bfile test/data/gwas --strand_info test/data/strand_info.txt --population EUR -with-docker hclimente/gwas-tools`
-- Run VEGAS2: `vegas2.nf --snp_association test/data/assoc.chisq --bfile_ld_controls test/data/gwas --vegas_params '-top 10' -with-docker hclimente/gwas-tools`
+- Run VEGAS2: `vegas2.nf --snp_association test/data/assoc.chisq --bfile_ld_controls test/data/gwas --vegas2_params '-top 10' -with-docker hclimente/gwas-tools`
 - Map SNPs to GENCODE genes: `snp2gene.nf --bim test/data/gwas.bim -with-docker hclimente/gwas-tools`
 
 ### Network-guided GWAS

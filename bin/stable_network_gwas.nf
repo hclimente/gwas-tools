@@ -138,7 +138,7 @@ process fix_inputs {
     vegas <- read_tsv("$VEGAS2")
 
     if (any(grepl("^Top-", colnames(vegas)))) {
-        vegas <- select(vegas, -Pvalue) %>%
+        vegas <- select(vegas, -pvalue) %>%
             rename_with(function(x) { "pvalue" }, starts_with("Top-"))
     }
 
