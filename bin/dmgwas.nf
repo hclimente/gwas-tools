@@ -4,44 +4,57 @@ params.out = '.'
 params.r = 0.1
 params.d = 2
 
-// annotation
-VEGAS_OUT = file(params.vegas)
-TAB2 =  file(params.tab2)
-
 process dmgwas {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
+    publishDir params.out, mode: 'copy'
+    tag { SCORES.getBaseName() }
 
     input:
-        file VEGAS_OUT
-        file TAB2
-        val D from params.d
-        val R from params.r
+        path SCORES
+        path EDGELIST
+        val D
+        val R
 
     output:
-        file 'selected_genes.dmgwas.txt'
+        path "${SCORES.getBaseName()}.dmgwas.txt"
 
     """
     #!/usr/bin/env Rscript
 
     library(dmGWAS)
-    library(tidyverse)
+    library(readr)
+    library(dplyr)
 
-    vegas <- read_tsv('${VEGAS_OUT}') %>% 
-        select(Gene, Pvalue) %>%
-        mutate(Pvalue = ifelse(Pvalue == 1, 0.99999, Pvalue)) %>%
+    scores <- read_tsv('${SCORES}') %>% 
+        select(gene, pvalue) %>%
+        mutate(pvalue = ifelse(pvalue == 1, 0.99999, pvalue)) %>%
         as.data.frame
-    ppi <- read_tsv('${TAB2}',
-		    col_types = 'cccccccccccccccccccccccc') %>%
-        rename(interactorA = `Official Symbol Interactor A`, 
-               interactorB = `Official Symbol Interactor B`) %>%
-        select(interactorA, interactorB)
+    net <- read_tsv('${EDGELIST}')
 
-    modules <- dms(ppi, vegas, expr1 = NULL, expr2 = NULL, r = ${R}, d = ${D})
+    modules <- dms(net, scores, expr1 = NULL, expr2 = NULL, r = ${R}, d = ${D})
     top <- simpleChoose(modules)
 
     tibble(gene = names(V(top\$subnetwork))) %>%
-        write_tsv('selected_genes.dmgwas.txt')
+        write_tsv("${SCORES.getBaseName()}.dmgwas.txt")
     """
 
+}
+
+workflow dmgwas_nf {
+    take:
+        scores
+        edgelist
+        d
+        r
+    main:
+        dmgwas(scores, edgelist, d, r)
+    emit:
+        dmgwas.out
+}
+
+workflow {
+    main:
+        dmgwas_nf(file(params.scores), file(params.edgelist), params.d, params.r)
+    emit:
+        dmgwas_nf.out
 }

@@ -1,0 +1,35 @@
+FROM hclimente/gwas-tools
+
+ENV PATH="/tools:${PATH}"
+WORKDIR /tools
+
+COPY extra_deps.sh .
+RUN bash extra_deps.sh && rm extra_deps.sh
+
+# HotNet2
+RUN wget https://bootstrap.pypa.io/pip/2.7/get-pip.py && \
+    python2 get-pip.py && \
+    rm get-pip.py
+RUN wget https://github.com/raphael-group/hotnet2/archive/refs/tags/v1.2.1.tar.gz && \
+    tar xzf v1.2.1.tar.gz && \
+    rm v1.2.1.tar.gz && \
+    cd hotnet2-1.2.1 && \
+    pip2 install -r requirements.txt && \
+    sed 's/env python/env python2/' HotNet2.py >HotNet2_custom.py && \
+    echo "#!/usr/bin/env python2" >makeHeatFile_custom.py && \
+    cat makeHeatFile.py >>makeHeatFile_custom.py && \
+    sed 's/env python/env python2/' makeNetworkFiles.py >makeNetworkFiles_custom.py && \
+    cd .. && \
+    ln -s hotnet2-1.2.1/HotNet2_custom.py HotNet2.py && \
+    ln -s hotnet2-1.2.1/makeNetworkFiles_custom.py makeNetworkFiles.py && \
+    ln -s hotnet2-1.2.1/makeHeatFile_custom.py makeHeatFile.py && \
+    chmod a+x HotNet2.py makeHeatFile.py makeNetworkFiles.py
+# HotNet2 compiled components
+RUN cd hotnet2-1.2.1 && \
+    apt-get update --allow-releaseinfo-change && \
+    apt-get install -y python2-dev gcc gfortran && \
+    python2 hotnet2/setup_fortran.py build_src build_ext --inplace && \
+    python2 hotnet2/setup_c.py build_src build_ext --inplace
+
+# set up project
+WORKDIR /work

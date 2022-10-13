@@ -3,30 +3,86 @@
 params.out = '.'
 
 // sigmod params
-SIGMOD_PATH = file(params.sigmod)
 params.lambdamax = 1
 params.nmax = 300
 params.maxjump = 10
 
-// annotation
-VEGAS_OUT = file(params.vegas)
-TAB2 = file(params.tab2)
+process download_sigmod {
+
+    output:
+        path "SigMod_v2"
+
+    """
+    wget https://github.com/YuanlongLiu/SigMod/raw/20c561876d87a0faca632a6b93882fcffd719b17/SigMod_v2.zip && unzip SigMod_v2.zip
+    """
+}
 
 process sigmod {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
+    publishDir params.out, mode: 'copy'
+    tag { SCORES.getBaseName() }
 
     input:
-        file VEGAS_OUT
-        file TAB2
-        file SIGMOD_PATH
-        val LAMBDAMAX from params.lambdamax
-        val NMAX from params.nmax
-        val MAXJUMP from params.maxjump
+        path SCORES
+        path EDGELIST
+        val LAMBDAMAX
+        val NMAX
+        val MAXJUMP
+        path SIGMOD_PATH
 
     output:
-        file 'selected_genes.sigmod.txt'
+        path "${SCORES.getBaseName()}.sigmod.txt"
 
     script:
-    template 'discovery/run_sigmod.R'
+    """
+#!/usr/bin/env Rscript
+
+require(igraph)
+library(tidyverse)
+
+scripts <- list.files('${SIGMOD_PATH}/R', pattern='*.R\$', full.names=TRUE, ignore.case=TRUE)
+sapply(scripts, source, .GlobalEnv)
+
+# read network
+net <- read_tsv("${EDGELIST}") %>%
+    filter(gene1 != gene2) %>%
+    as.data.frame
+
+# read vegas output
+scores <- read_tsv('${SCORES}') %>% 
+    rename(p = pvalue) %>%
+    select(gene, p) %>%
+    as.data.frame
+
+# check weight_index = NULL
+scored_net <- construct_scored_net(net, interaction_indices = c(1,2), gene_ps = scores)
+res_info <- SigMod_bisection(net = scored_net, lambda_max = ${LAMBDAMAX}, nmax = ${NMAX}, maxjump = ${MAXJUMP})
+
+save(scored_net, res_info, file = 'sigmod.RData')
+
+data.frame(gene = names(V(res_info\$opt_module[[1]]))) %>%
+    write_tsv("${SCORES.getBaseName()}.sigmod.txt")
+    """
+
+}
+
+workflow sigmod_nf {
+    take:
+        scores
+        edgelist
+        lambdamax
+        nmax
+        maxjump
+    main:
+        download_sigmod()
+        sigmod(scores, edgelist, lambdamax, nmax, maxjump, download_sigmod.out)
+    emit:
+        sigmod.out
+}
+
+workflow {
+    main:
+        sigmod_nf(file(params.scores), file(params.edgelist), params.lambdamax, params.nmax, params.maxjump)
+    emit:
+        sigmod_nf.out
 }

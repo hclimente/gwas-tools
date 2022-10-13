@@ -1,123 +1,78 @@
 #!/usr/bin/env nextflow
 
-params.out = "."
+params.out = '.'
 
-tab2 = file(params.tab2)
-vegas = file(params.scores)
-hotnet2_path = file(params.hotnet2_path)
-
-network_permutations = 100
-heat_permutations = 1000
+params.network_permutations = 100
+params.heat_permutations = 1000
 beta = 0.4
-params.lfdr_cutoff = 0.05
+params.fdr = 0.2
 
 process make_network {
 
     input:
-        file TAB2 from tab2
+        path EDGELIST
+        val BETA
+        val NETWORK_PERMUTATIONS
 
     output:
-        file 'node_index.tsv' into node_index
-        file 'edge_list.tsv' into edge_list
-
-    script:
-    template 'io/tab2_2hotnet.R'
-
-}
-
-process sparse_scores {
-
-    publishDir "$params.out", overwrite: true, mode: "copy"
-
-    input:
-    file SCORES from vegas
-    val CUTOFF from params.lfdr_cutoff
-
-    output:
-    file 'scored_genes.sparse.txt' into sparse_scores
-    file 'lfdr_plot.pdf'
+        tuple path("ppin_ppr_${BETA}.h5"), path('permuted')
 
     """
-#!/usr/bin/env Rscript
-
+    R --no-save <<code
 library(tidyverse)
-library(twilight)
-library(cowplot)
+library(igraph)
 
-theme_set(theme_cowplot())
+net <- read_tsv("${EDGELIST}") %>%
+  graph_from_data_frame(directed = FALSE)
 
-scores <- read_tsv('${SCORES}')
+as_edgelist(net, names = FALSE) %>% 
+    as.data.frame %>% 
+    write_tsv('edge_list.tsv', col_names = FALSE)
+tibble(id = V(net), names = names(V(net))) %>%
+    write_tsv('node_index.tsv', col_names = FALSE)
+code
 
-lfdr <- twilight(scores\$Pvalue, B=1000)
-lfdr <- tibble(Gene = scores\$Gene[as.numeric(rownames(lfdr\$result))],
-               vegas_p = scores\$Pvalue[as.numeric(rownames(lfdr\$result))],
-               lfdr = lfdr\$result\$fdr)
-
-ggplot(lfdr, aes(x = vegas_p, y = 1 - lfdr)) +
-    geom_line() +
-    geom_vline(xintercept = ${CUTOFF}, color = 'red') +
-    labs(x = 'P-value', y = '1 - lFDR')
-ggsave('lfdr_plot.pdf', width=7, height=6)
-
-lfdr %>%
-    mutate(Pvalue = ifelse(vegas_p < ${CUTOFF}, vegas_p, 1)) %>%
-    write_tsv('scored_genes.sparse.txt')
-    """
-
-}
-
-process vegas2hotnet {
-
-    input:
-        file VEGAS from sparse_scores 
-
-    output:
-        file 'scores.ht' into scores
-
-    script:
-    template 'io/vegas2hotnet.R'
-
-}
-
-process make_h5_network {
-
-    input:
-        file HOTNET2 from hotnet2_path
-        file NODE_IDX from node_index
-        file EDGE_LIST from edge_list
-        val BETA from beta
-
-    output:
-        file "ppin_ppr_${BETA}.h5" into h5
-        file 'permuted' into permutations
-
-    """
-    python2 ${HOTNET2}/makeNetworkFiles.py \
---edgelist_file ${EDGE_LIST} \
---gene_index_file ${NODE_IDX} \
+    makeNetworkFiles.py \
+--edgelist_file edge_list.tsv \
+--gene_index_file node_index.tsv \
 --network_name ppin \
 --prefix ppin \
 --beta ${BETA} \
---num_permutations ${network_permutations} \
+--cores -1 \
+--num_permutations ${NETWORK_PERMUTATIONS} \
 --output_dir .
     """
 
 }
 
-process make_heat_data {
+process compute_heat {
+
+    tag { SCORES.getBaseName() }
 
     input:
-        file HOTNET2 from hotnet2_path
-        file SCORES from scores
+        path SCORES
+        val CUTOFF
 
     output:
-        file 'heat.json' into heat
+        path "${SCORES.getBaseName()}.json"
 
     """
-    python2 ${HOTNET2}/makeHeatFile.py \
+    R --no-save <<code
+library(tidyverse)
+
+read_tsv('${SCORES}') %>%
+    # sparsify scores
+    mutate(padj = p.adjust(pvalue, method = "fdr"),
+           p = ifelse(padj < ${CUTOFF}, pvalue, 1), 
+           score = -log10(p)) %>%
+    select(gene, score) %>%
+    write_tsv('scores.ht', col_names = FALSE)
+code
+
+    makeHeatFile.py \
 scores \
---heat_file ${SCORES} \
---output_file heat.json \
+--heat_file scores.ht \
+--output_file ${SCORES.getBaseName()}.json \
 --name gwas
     """
 
@@ -125,49 +80,79 @@ scores \
 
 process hotnet2 {
 
+    tag { HEAT.getBaseName() }
+
     input:
-        file HOTNET2 from hotnet2_path
-        file HEAT from heat
-        file NETWORK from h5
-        file PERMS from permutations
-        val BETA from beta
+        tuple path(NETWORK), path(PERMS) 
+        path HEAT
+        val BETA
+        val NETWORK_PERMUTATIONS
+        val HEAT_PERMUTATIONS
 
     output:
-        file 'consensus/subnetworks.tsv' into subnetworks
+        path "${HEAT.getBaseName()}.subnetworks.tsv"
 
     """
-    python2 ${HOTNET2}/HotNet2.py \
+    HotNet2.py \
 --network_files ${NETWORK} \
 --permuted_network_path ${PERMS}/ppin_ppr_${BETA}_##NUM##.h5 \
 --heat_files ${HEAT} \
---network_permutations ${network_permutations} \
---heat_permutations ${heat_permutations} \
+--network_permutations ${NETWORK_PERMUTATIONS} \
+--heat_permutations ${HEAT_PERMUTATIONS} \
+--num_cores -1 \
 --output_directory .
+
+    mv consensus/subnetworks.tsv ${HEAT.getBaseName()}.subnetworks.tsv
     """
 
 }
 
 process process_output {
 
-    publishDir "$params.out", overwrite: true, mode: "copy"
+    publishDir params.out, mode: 'copy'
+    tag { SUBNETWORKS.getBaseName() }
 
     input:
-        file SUBNETWORKS from subnetworks
+        path SCORES
+        path SUBNETWORKS
 
     output:
-        file 'selected_genes.hotnet2.tsv'
+        path "${SCORES.getBaseName()}.hotnet2.tsv"
 
     """
 #!/usr/bin/env Rscript
 
 library(tidyverse)
 
-read_tsv('${SUBNETWORKS}', col_types = 'cc', comment = '#', col_names = F) %>%
-    select(X1) %>%
-    mutate(cluster = 1:n()) %>%
-    separate_rows(X1, sep = ' ') %>%
-    rename(gene = X1) %>%
-    write_tsv('selected_genes.hotnet2.tsv')
+read_tsv('${SUBNETWORKS}', col_types = 'cc', skip = 1) %>%
+    rename(gene = `#Core`) %>%
+    select(gene) %>%
+    mutate(cluster = ifelse(n() > 0, 1:n(), 0)) %>%
+    separate_rows(gene, sep = ' ') %>%
+    write_tsv('${SCORES.getBaseName()}.hotnet2.tsv')
     """
 
+}
+
+workflow hotnet2_nf {
+    take:
+        scores
+        edgelist
+        fdr
+        network_permutations
+        heat_permutations
+    main:
+        make_network(edgelist, beta, network_permutations)
+        compute_heat(scores, fdr)
+        hotnet2(make_network.out, compute_heat.out, beta, network_permutations, heat_permutations)
+        process_output(scores, hotnet2.out)
+    emit:
+        process_output.out
+}
+
+workflow {
+    main:
+        hotnet2_nf(file(params.scores), file(params.edgelist), params.fdr, params.network_permutations, params.heat_permutations)
+    emit:
+        hotnet2_nf.out
 }

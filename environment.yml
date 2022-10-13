@@ -1,0 +1,36 @@
+name: gwas-tools
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # python
+  - pip
+  - python=3
+  # bioinformatics
+  - bedops
+  - bedtools
+  - plink
+  - plink2
+  # R
+  - bioconductor-bionet
+  - bioconductor-martini
+  - r-base=4
+  - r-biglasso
+  - r-bigmemory
+  - r-biocmanager
+  - r-corpcor
+  - r-domc
+  - r-igraph
+  - r-magrittr
+  - r-mvtnorm
+  - r-ranger
+  - r-SKAT
+  - r-tidyverse
+  # software
+  - gawk
+  - sed
+  - tar
+  - nextflow
+  - unzip
+  - wget 

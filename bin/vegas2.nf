@@ -2,42 +2,29 @@
 
 params.out = '.'
 
-params.gencode = 28
-params.genome = '38'
-params.vegas_params = ''
-params.covar = ''
-params.snp_association = ''
-params.ld_controls = ''
+include { download_hgnc; download_gencode } from './snp2gene.nf'
+include { get_bfile } from './templates/utils.nf'
+
+params.bfile_ld_controls = null
 params.buffer = 0
+params.gencode_version = 41
+params.genome_version = '38'
+params.snp_association = ''
+params.vegas2_params = ''
 
-//////////////////////////////////////////////
-///            CREATE GENE LIST            ///
-//////////////////////////////////////////////
-process download_gencode {
+bfile_ld_controls = get_bfile(params.bfile_ld_controls)
 
-    input:
-        val GENCODE_VERSION from params.gencode
-        val GRCH_VERSION from params.genome
-
-    output:
-        file 'gff3' into gff
-    
-    script:
-    template 'dbs/gencode.sh'
-
-}
-
-process make_glist {
+process compute_gene_coords {
 
     input:
-        file gff
-        val BUFF from params.buffer
+        path GFF
+        val BUFF
 
     output:
-        file 'glist_ensembl' into glist_vegas, glist_chrs
+        path 'glist_ensembl'
 
     """
-    awk '\$3 == "gene"' $gff >genes.gff
+    awk '\$3 == "gene"' $GFF >genes.gff
     gff2bed < genes.gff | cut -f1-4 | sed 's/\\.[^\\t]\\+\$//' | sed 's/^chr//' >tmp
     awk '{\$2 = \$2 - ${BUFF}; \$3 = \$3 + ${BUFF}} 1' tmp | awk '\$2 < 0 {\$2 = 0} 1' >buffered_genes
     sed 's/^XY/25/' buffered_genes | sed 's/^X/23/' | sed 's/^Y/24/' | sed 's/^M/26/' | awk '\$1 <= 24' >glist_ensembl
@@ -45,136 +32,95 @@ process make_glist {
 
 }
 
-chromosomes = glist_chrs
-    .splitCsv(header: false, sep: ' ')
-    .map { row -> row[0] }
-    .unique()
+process vegas2 {
 
-//////////////////////////////////////////////
-///          SNP ASSOCIATION TEST          ///
-//////////////////////////////////////////////
-if (params.snp_association == ''){
-
-  bed = file("${params.bfile}.bed")
-  bim = file("${bed.getParent()}/${bed.getBaseName()}.bim")
-  fam = file("${bed.getParent()}/${bed.getBaseName()}.fam")
-
-  if (params.covar == '') {
-
-      process compute_chisq {
-
-          input:
-              file BED from bed
-              file BIM from bim
-              file FAM from fam
-
-          output:
-              file 'snp_association' into snp_association
-
-          """
-          plink --bed ${BED} --bim ${BIM} --fam ${FAM} --assoc --allow-no-sex
-          awk 'NR > 1 && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc >snp_association
-          """
-
-      }
-
-  } else {
-
-    covar = file(params.covar)
-
-    process regress_phenotypes_with_covars {
-
-        input:
-            file BED from bed
-            file BIM from bim
-            file FAM from fam
-            file COVAR from covar
-
-        output:
-            file 'snp_association' into snp_association
-
-        """
-        plink --bed ${BED} --bim ${BIM} --fam ${FAM} --logistic --covar ${COVAR}
-        awk 'NR > 1 && \$5 == "ADD" && \$9 != "NA" { print \$2,\$9 }' OFS='\\t' plink.assoc.logistic >snp_association
-        """
-
-    }
-  }
-} else {
-
-  snp_association = file(params.snp_association)
-
-}
-
-//////////////////////////////////////////////
-///         EXTRACT CONTROLS FOR LD        ///
-//////////////////////////////////////////////
-if (params.ld_controls == '') {
-  process extract_controls {
-
-      input:
-          file BED from bed
-          file bim
-          file fam
-
-      output:
-          file 'plink.bed' into bed_controls
-          file 'plink.bim' into bim_controls
-          file 'plink.fam' into fam_controls
-
-      """
-      plink --bfile ${BED.baseName} --filter-controls --make-bed
-      """
-
-  }
-} else {
-
-  bed_controls = file("${params.ld_controls}.bed")
-  bim_controls = file("${bed_controls.getParent()}/${bed_controls.getBaseName()}.bim")
-  fam_controls = file("${bed_controls.getParent()}/${bed_controls.getBaseName()}.fam")
-
-}
-
-//////////////////////////////////////////////
-///                RUN VEGAS               ///
-//////////////////////////////////////////////
-process vegas {
-
-    tag { "Chr ${CHR}" }
+    tag { "${SNP_ASSOC}, chr ${CHR}" }
 
     input:
-        file BED from bed_controls
-        file bim_controls
-        file fam_controls
-        file SNPASSOCIATION from snp_association
-        file GLIST from glist_vegas
-        val VEGAS_PARAMS from params.vegas_params
-        each CHR from chromosomes
+        path SNP_ASSOC
+        tuple path(BED), path(BIM), path(FAM)
+        path GLIST
+        val VEGAS_PARAMS
+        each CHR
 
     output:
-        file 'scored_genes.vegas.txt' into vegas_out
+        tuple val("${SNP_ASSOC.getBaseName()}"), path("chr_${CHR}.tsv")
 
     """
-    vegas2v2 -G -snpandp ${SNPASSOCIATION} -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes -chr $CHR ${VEGAS_PARAMS}
+    cut -f3,4 ${SNP_ASSOC} | tail -n +2 >assoc
+
+    vegas2v2 -G -snpandp assoc -custom `pwd`/${BED.baseName} -glist ${GLIST} -out scored_genes -chr $CHR ${VEGAS_PARAMS}
     sed 's/"//g' scored_genes.out | sed 's/ /\\t/g' >tmp
-    R -e 'library(tidyverse); read_tsv("tmp", col_types = "iciddddddcd") %>% filter(!duplicated(Gene)) %>% write_tsv("scored_genes.vegas.txt")'
+    R -e 'library(tidyverse); read_tsv("tmp", col_types = "iciddddddcd") %>% filter(!duplicated(Gene)) %>% write_tsv("chr_${CHR}.tsv")'
     """
 
 }
 
 process merge_chromosomes {
-
-    publishDir "$params.out", overwrite: true, mode: "copy"
+    
+    publishDir params.out, mode: 'copy'
+    tag { KEY }
 
     input:
-        file 'scored_genes_chr*' from vegas_out.collect()
+        tuple val(KEY), path('chr_*')
+		path HGNC
 
     output:
-        file 'scored_genes.vegas.txt'
+        path "${KEY}.vegas2.tsv"
 
     """
-    head -n1 scored_genes_chr1 >scored_genes.vegas.txt
-    tail -n +2 -q scored_genes_chr* | sort -n >>scored_genes.vegas.txt
+	#!/usr/bin/env Rscript
+
+    library(tidyverse)
+
+	ensembl2hgnc <- read_tsv('$HGNC') %>%
+		select(symbol, ensembl_gene_id)
+
+    list.files(pattern="chr_") %>%
+        lapply(read_tsv, col_types = 'cciiiiddcd') %>%
+        bind_rows %>%
+        inner_join(ensembl2hgnc, by = c("Gene" = "ensembl_gene_id")) %>%
+        mutate(Gene = symbol) %>%
+        select(-symbol) %>%
+        rename(gene = Gene, pvalue = Pvalue) %>%
+        write_tsv('${KEY}.vegas2.tsv')
     """
 
+}
+
+workflow vegas2_nf {
+    take:
+        snp_association
+        bfile_ld_controls
+        gencode_version
+        genome_version
+        buffer
+        vegas2_params
+    main:
+        download_gencode(gencode_version, genome_version)
+        compute_gene_coords(download_gencode.out, params.buffer)
+
+        chromosomes = snp_association
+            .splitCsv(sep: '\t')
+            .map { row -> row[0] }
+            .unique()
+
+        vegas2(snp_association, bfile_ld_controls, compute_gene_coords.out, vegas2_params, chromosomes)
+
+        vegas_outputs = vegas2.out
+            .groupTuple()
+
+        download_hgnc()
+        merge_chromosomes(vegas_outputs, download_hgnc.out)
+    emit:
+        merge_chromosomes.out
+}
+
+workflow {
+    main:
+        snp_association = Channel.fromPath(params.snp_association)
+
+        vegas2_nf(snp_association, bfile_ld_controls, params.gencode_version, params.genome_version, params.buffer, params.vegas2_params)
+    emit:
+        vegas2_nf.out
 }

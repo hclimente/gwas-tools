@@ -1,4 +1,12 @@
 *nextflow*
+test/
+
+# software
+AntEpiSeeker
+gtool
+impute2
+mbmdr
+vegas2v2
 
 # Created by https://www.gitignore.io/api/macos,python,visualstudiocode
 
@@ -161,3 +169,6 @@ pip-selfcheck.json
 
 # End of https://www.gitignore.io/api/macos,python,visualstudiocode
 
+### Nextflow ###
+.nextflow*
+work/
