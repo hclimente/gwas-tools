@@ -25,7 +25,7 @@ process heinz {
 
     vegas <- read_tsv('${SCORES}')
     net <- read_tsv("${EDGELIST}") %>%
-        filter(gene1 %in% vegas\$Gene & gene2 %in% vegas\$Gene) %>%
+        filter(gene1 %in% vegas\$gene & gene2 %in% vegas\$gene) %>%
         graph_from_data_frame(directed = FALSE)
     vegas <- filter(vegas, gene %in% names(V(net)))
 
