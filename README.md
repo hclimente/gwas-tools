@@ -64,7 +64,7 @@ The available methods are:
 
 If you use this algorithm, please cite the following article:
 
-> Climente-González H *et al.* (2022) **Network-guided GWAS using stability selection.** 
+> Climente-González H *et al.* (2023) **Network-guided GWAS using stability selection.** Accepted in STAR Protocols.
 
 Usage:
 
